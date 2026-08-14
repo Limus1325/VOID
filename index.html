@@ -24,7 +24,6 @@
             max-width: 1200px;
             width: 100%;
         }
-        /* шапка */
         .header {
             display: flex;
             align-items: center;
@@ -134,12 +133,27 @@
             background: #8b6aff;
             box-shadow: 0 0 20px #6b47d966;
         }
-        .cart-section, .admin-section {
+        .cart-section, .admin-section, .balance-section {
             background: #130f21;
             border-radius: 28px;
             padding: 28px 30px;
             border: 1px solid #32284a;
             margin-top: 20px;
+        }
+        .balance-section {
+            background: #0f0c1e;
+            border-color: #3b2b5a;
+            text-align: center;
+        }
+        .balance-section h2 {
+            font-size: 1.4rem;
+            color: #b79aff;
+        }
+        .balance-section .amount {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #e5daff;
+            margin: 10px 0;
         }
         .cart-section h2, .admin-section h2 {
             font-size: 1.8rem;
@@ -167,7 +181,7 @@
             color: #c2adff;
             margin: 10px 0 20px;
         }
-        .btn-buy, .btn-confirm {
+        .btn-buy, .btn-confirm, .btn-give {
             background: #a07cff;
             border: none;
             border-radius: 60px;
@@ -180,7 +194,7 @@
             box-shadow: 0 0 20px #7a4cff55;
             margin-right: 15px;
         }
-        .btn-buy:hover, .btn-confirm:hover {
+        .btn-buy:hover, .btn-confirm:hover, .btn-give:hover {
             background: #bea5ff;
             box-shadow: 0 0 40px #7a4cffaa;
             transform: scale(1.02);
@@ -232,7 +246,7 @@
         .hidden {
             display: none;
         }
-        .nick-input, .auth-input {
+        .nick-input, .auth-input, .give-input {
             background: #0b081a;
             border: 1px solid #3b2b5a;
             color: #d9d0f0;
@@ -244,31 +258,30 @@
         .nick-input {
             width: 200px;
         }
-        .auth-input {
+        .auth-input, .give-input {
             width: 160px;
         }
-        .nick-input:focus, .auth-input:focus {
+        .nick-input:focus, .auth-input:focus, .give-input:focus {
             border-color: #9b7bff;
         }
-        .auth-box {
+        .auth-box, .give-box {
             background: #18122b;
             padding: 20px 25px;
             border-radius: 20px;
             border: 1px solid #32284a;
             margin: 15px 0;
-            max-width: 400px;
+            max-width: 100%;
         }
-        .auth-box .flex-row {
-            gap: 10px;
-        }
-        .auth-box .btn-confirm {
-            padding: 10px 25px;
-            font-size: 1rem;
-        }
-        .auth-msg {
+        .auth-msg, .give-msg {
             color: #7a6a9a;
             font-size: 0.9rem;
             margin-top: 8px;
+        }
+        .balance-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #26203b;
         }
         @media (max-width: 600px) {
             .header {
@@ -288,7 +301,7 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            .nick-input, .auth-input {
+            .nick-input, .auth-input, .give-input {
                 width: 100%;
             }
         }
@@ -312,6 +325,17 @@
         <button class="admin-btn" id="toggle-admin-btn">🔐 Админ</button>
     </header>
 
+    <!-- БАЛАНС -->
+    <section class="balance-section" id="balance-section">
+        <h2>💰 Ваш баланс</h2>
+        <div class="amount" id="user-balance">0</div>
+        <span style="color:#7a6a9a; font-size:0.9rem;">VC</span>
+        <div style="margin-top:8px;">
+            <input type="text" id="balance-nick" class="nick-input" placeholder="Ваш игровой ник" style="width:200px;">
+            <button class="btn-confirm" id="check-balance-btn" style="padding:10px 25px; font-size:1rem;">Показать</button>
+        </div>
+    </section>
+
     <!-- УСЛУГИ -->
     <div id="services-list" class="services-grid"></div>
 
@@ -327,11 +351,11 @@
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
-    <!-- АДМИН-ПАНЕЛЬ (скрыта по умолчанию) -->
+    <!-- АДМИН-ПАНЕЛЬ -->
     <section class="admin-section hidden" id="admin-panel">
         <h2>🔐 Админ-панель</h2>
         <div id="admin-content">
-            <!-- сюда динамически подставляется содержимое -->
+            <!-- сюда подставляется содержимое -->
         </div>
     </section>
 
@@ -341,12 +365,13 @@
     // ========== ДАННЫЕ ==========
     let cart = [];
     let servicesData = [];
-    let activeOrder = null; // { code, nick, items, total, timestamp, confirmed }
+    let activeOrder = null;
+
+    // Хранилище балансов: { 'nick': число }
+    let balances = JSON.parse(localStorage.getItem('void_balances')) || {};
 
     // ========== АВТОРИЗАЦИЯ ==========
-    let adminSession = null; // { login }
-
-    // Встроенная "база" админов (для демонстрации — в реальном проекте хранить на сервере)
+    let adminSession = null;
     const adminDB = {
         'admin': 'void2026',
         'fox': 'limusss'
@@ -411,6 +436,30 @@
         totalSpan.textContent = sum;
     }
 
+    // ========== БАЛАНС ==========
+    function getBalance(nick) {
+        return balances[nick] || 0;
+    }
+
+    function setBalance(nick, amount) {
+        balances[nick] = Math.max(0, amount);
+        localStorage.setItem('void_balances', JSON.stringify(balances));
+    }
+
+    function addBalance(nick, amount) {
+        const current = getBalance(nick);
+        setBalance(nick, current + amount);
+    }
+
+    document.getElementById('check-balance-btn').addEventListener('click', () => {
+        const nick = document.getElementById('balance-nick').value.trim();
+        if (!nick) {
+            alert('Введите ник');
+            return;
+        }
+        document.getElementById('user-balance').textContent = getBalance(nick);
+    });
+
     // ========== ГЕНЕРАЦИЯ КОДА ==========
     function generateOrderCode() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -437,7 +486,6 @@
             return;
         }
 
-        // Если есть активный неподтверждённый заказ
         if (activeOrder && !activeOrder.confirmed) {
             if (!confirm('У вас уже есть активный заказ. Заменить его новым?')) {
                 return;
@@ -446,6 +494,16 @@
 
         const code = generateOrderCode();
         const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+        // Проверка баланса
+        if (getBalance(nick) < total) {
+            alert(`❌ Недостаточно VC. Ваш баланс: ${getBalance(nick)} VC`);
+            return;
+        }
+
+        // Списание
+        addBalance(nick, -total);
+
         const items = cart.map(item => ({ name: item.name, price: item.price }));
 
         activeOrder = {
@@ -462,6 +520,8 @@
         nickInput.value = '';
 
         renderAdminPanel();
+        document.getElementById('user-balance').textContent = getBalance(nick);
+
         alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC\n\nКод действителен до подтверждения администратором.`);
     });
 
@@ -510,8 +570,7 @@
             });
 
             document.getElementById('show-register-btn').addEventListener('click', () => {
-                const box = document.getElementById('register-box');
-                box.classList.toggle('hidden');
+                document.getElementById('register-box').classList.toggle('hidden');
             });
 
             document.getElementById('register-btn').addEventListener('click', () => {
@@ -543,41 +602,53 @@
         }
 
         // Админ авторизован
-        if (!activeOrder || activeOrder.confirmed) {
-            content.innerHTML = `
-                <p style="color:#7a6a9a;">Нет активных заказов.</p>
-                <div style="margin-top:15px;">
-                    <button class="btn-danger" id="admin-logout-btn">🚪 Выйти</button>
+        let ordersHtml = '';
+        if (activeOrder && !activeOrder.confirmed) {
+            const itemsList = activeOrder.items.map(item =>
+                `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+            ).join('');
+            ordersHtml = `
+                <div class="order-info">
+                    <p><span>Код заказа:</span> <span class="order-code">${activeOrder.code}</span></p>
+                    <p><span>Игрок:</span> ${activeOrder.nick}</p>
+                    <p><span>Дата и время:</span> ${activeOrder.timestamp}</p>
+                    <p><span>Сумма:</span> ${activeOrder.total} VC</p>
+                    <p><span>Услуги:</span></p>
+                    <ul>${itemsList}</ul>
+                </div>
+                <div class="flex-row">
+                    <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
+                    <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
                 </div>
             `;
-            document.getElementById('admin-logout-btn')?.addEventListener('click', () => {
-                adminSession = null;
-                renderAdminPanel();
-            });
-            return;
+        } else {
+            ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
         }
 
-        const itemsList = activeOrder.items.map(item =>
-            `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-        ).join('');
+        // Блок выдачи VC
+        const giveHtml = `
+            <div class="give-box">
+                <h3 style="color:#c6b5ff; margin-bottom:12px;">💎 Выдать VC</h3>
+                <div class="flex-row">
+                    <input type="text" id="give-nick" class="give-input" placeholder="Ник игрока">
+                    <input type="number" id="give-amount" class="give-input" placeholder="Сумма" min="1">
+                    <button class="btn-give" id="give-btn">Выдать</button>
+                </div>
+                <div id="give-msg" class="give-msg"></div>
+            </div>
+        `;
 
         content.innerHTML = `
-            <div class="order-info">
-                <p><span>Код заказа:</span> <span class="order-code">${activeOrder.code}</span></p>
-                <p><span>Игрок:</span> ${activeOrder.nick}</p>
-                <p><span>Дата и время:</span> ${activeOrder.timestamp}</p>
-                <p><span>Сумма:</span> ${activeOrder.total} VC</p>
-                <p><span>Услуги:</span></p>
-                <ul>${itemsList}</ul>
-            </div>
-            <div class="flex-row">
-                <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
-                <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
+            ${ordersHtml}
+            <hr style="border-color:#26203b; margin:25px 0;">
+            ${giveHtml}
+            <div style="margin-top:20px;">
                 <button class="btn-danger" id="admin-logout-btn">🚪 Выйти</button>
             </div>
         `;
 
-        document.getElementById('confirm-order-btn').addEventListener('click', () => {
+        // Обработчики для заказов
+        document.getElementById('confirm-order-btn')?.addEventListener('click', () => {
             if (activeOrder && !activeOrder.confirmed) {
                 activeOrder.confirmed = true;
                 alert(`✅ Заказ ${activeOrder.code} подтверждён!`);
@@ -585,13 +656,39 @@
             }
         });
 
-        document.getElementById('cancel-order-btn').addEventListener('click', () => {
+        document.getElementById('cancel-order-btn')?.addEventListener('click', () => {
             if (activeOrder && !activeOrder.confirmed) {
                 if (confirm(`Отменить заказ ${activeOrder.code}?`)) {
+                    // Возвращаем средства
+                    addBalance(activeOrder.nick, activeOrder.total);
                     activeOrder = null;
                     renderAdminPanel();
                 }
             }
+        });
+
+        // Обработчик выдачи VC
+        document.getElementById('give-btn')?.addEventListener('click', () => {
+            const nick = document.getElementById('give-nick').value.trim();
+            const amount = parseInt(document.getElementById('give-amount').value.trim());
+            const msg = document.getElementById('give-msg');
+
+            if (!nick) {
+                msg.textContent = '❌ Введите ник игрока';
+                msg.style.color = '#ff6b6b';
+                return;
+            }
+            if (!amount || amount <= 0) {
+                msg.textContent = '❌ Введите корректную сумму (больше 0)';
+                msg.style.color = '#ff6b6b';
+                return;
+            }
+
+            addBalance(nick, amount);
+            msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
+            msg.style.color = '#b79aff';
+            document.getElementById('give-nick').value = '';
+            document.getElementById('give-amount').value = '';
         });
 
         document.getElementById('admin-logout-btn')?.addEventListener('click', () => {
