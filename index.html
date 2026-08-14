@@ -26,8 +26,17 @@
             margin-bottom: 30px;
             flex-wrap: wrap;
         }
-        .logo-svg { width: 70px; height: 70px; flex-shrink: 0; }
-        .logo-svg svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 12px #9b7bff66); }
+        .logo-svg {
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+        }
+        .logo-svg svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 0 15px #7a4cff66);
+        }
         .header h1 {
             font-size: 2.2rem;
             font-weight: 700;
@@ -56,14 +65,8 @@
             border: 1px solid #32284a;
             flex-wrap: wrap;
         }
-        .header .auth-area .user-label {
-            color: #7a6a9a;
-            font-size: 0.9rem;
-        }
-        .header .auth-area .user-name {
-            color: #b79aff;
-            font-weight: 600;
-        }
+        .header .auth-area .user-label { color: #7a6a9a; font-size: 0.9rem; }
+        .header .auth-area .user-name { color: #b79aff; font-weight: 600; }
         .header .auth-btn, .header .logout-btn {
             background: #2a1f42;
             border: none;
@@ -184,7 +187,6 @@
             max-width: 100%;
         }
         .auth-msg, .give-msg { color: #7a6a9a; font-size: 0.9rem; margin-top: 8px; }
-        .balance-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #26203b; }
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -231,10 +233,21 @@
     <header class="header">
         <div class="logo-svg">
             <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 6 L6 2 L10 6 L6 10 L2 6 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
-                <path d="M14 14 L18 10 L14 6 L10 10 L14 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
-                <path d="M6 14 L10 18 L14 14 L10 10 L6 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
-                <circle cx="10" cy="10" r="2" fill="#9b7bff" opacity="0.5"/>
+                <!-- Преобразованный логотип из JSON -->
+                <polyline points="-10.0,-6.51 -7.27,-3.57 -4.54,-0.64 -1.81,2.3 0.02,4.67" stroke="#9b7bff" stroke-width="1.2" fill="none"/>
+                <polyline points="-10.0,-6.51 -6.0,-6.51 -2.0,-6.51 2.0,-6.51 6.0,-6.51 9.99,-6.51" stroke="#9b7bff" stroke-width="1.2" fill="none"/>
+                <polyline points="-5.04,-4.53 -4.84,-0.54 -4.74,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
+                <polyline points="-5.04,-4.53 -1.04,-4.53 2.96,-4.53 4.76,-4.53" stroke="#b79aff" stroke-width="1.2" fill="none"/>
+                <polyline points="-4.74,-0.24 -0.74,-0.24 3.26,-0.24 4.76,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
+                <polyline points="-4.74,-0.24 -1.73,-2.88 1.28,-5.52 1.34,-5.55" stroke="#b79aff" stroke-width="1.2" fill="none"/>
+                <polyline points="0.02,4.67 2.85,1.86 4.76,-0.24" stroke="#7a4cff" stroke-width="1.2" fill="none"/>
+                <polyline points="0.02,4.67 2.75,1.75 5.48,-1.17 8.21,-4.09 9.99,-6.51" stroke="#7a4cff" stroke-width="1.2" stroke-dasharray="2 2" fill="none"/>
+                <polyline points="1.34,-5.55 4.36,-2.91 4.76,-2.44" stroke="#b79aff" stroke-width="1.2" fill="none"/>
+                <polyline points="4.76,-4.53 4.76,-0.54 4.76,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
+                <!-- Светящиеся точки -->
+                <circle cx="0.02" cy="4.67" r="0.4" fill="#9b7bff" opacity="0.8"/>
+                <circle cx="-10.0" cy="-6.51" r="0.4" fill="#7a4cff" opacity="0.6"/>
+                <circle cx="9.99" cy="-6.51" r="0.4" fill="#7a4cff" opacity="0.6"/>
             </svg>
         </div>
         <h1>VOID · RichClan</h1>
@@ -275,24 +288,22 @@
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
-    <!-- ========== АДМИН-ПАНЕЛЬ (ПОКАЗЫВАЕТСЯ ТОЛЬКО АДМИНАМ) ========== -->
+    <!-- ========== АДМИН-ПАНЕЛЬ ========== -->
     <section class="admin-section hidden" id="admin-panel">
         <h2>🔐 Админ-панель</h2>
         <div id="admin-content">
-            <!-- сюда подставляется содержимое -->
+            <!-- подставляется -->
         </div>
     </section>
 
 </div>
 
-<!-- ========== МОДАЛЬНЫЕ ОКНА ДЛЯ ВХОДА/РЕГИСТРАЦИИ ========== -->
+<!-- ========== МОДАЛЬНЫЕ ОКНА ========== -->
 <div id="auth-modal" class="modal-overlay hidden">
     <div class="modal-box">
         <button class="modal-close" id="modal-close">✕</button>
         <h3 id="modal-title">Вход</h3>
-        <div id="modal-body">
-            <!-- содержимое подставляется -->
-        </div>
+        <div id="modal-body"></div>
         <div id="modal-msg" class="auth-msg"></div>
     </div>
 </div>
@@ -307,7 +318,6 @@
     let balances = JSON.parse(localStorage.getItem('void_balances')) || {};
     let adminSession = null;
 
-    // Встроенная база админов (для теста)
     const adminDB = {
         'admin': 'void2026',
         'fox': 'limusss'
@@ -327,7 +337,7 @@
         })
         .catch(err => {
             document.getElementById('services-list').innerHTML =
-                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги. Проверьте файл services.json</p>`;
+                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги.</p>`;
             console.error(err);
         });
 
@@ -415,23 +425,21 @@
         const nick = nickInput.value.trim();
 
         if (!nick) {
-            alert('Пожалуйста, укажите ваш игровой ник!');
+            alert('Укажите ваш игровой ник!');
             nickInput.focus();
             return;
         }
         if (cart.length === 0) {
-            alert('Корзина пуста! Добавьте услуги.');
+            alert('Корзина пуста!');
             return;
         }
         if (activeOrder && !activeOrder.confirmed) {
-            if (!confirm('У вас уже есть активный заказ. Заменить его новым?')) {
-                return;
-            }
+            if (!confirm('Заменить активный заказ новым?')) return;
         }
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
         if (getBalance(nick) < total) {
-            alert(`❌ Недостаточно VC. Ваш баланс: ${getBalance(nick)} VC`);
+            alert(`❌ Недостаточно VC. Баланс: ${getBalance(nick)} VC`);
             return;
         }
 
@@ -439,23 +447,19 @@
         addBalance(nick, -total);
 
         const items = cart.map(item => ({ name: item.name, price: item.price }));
-        activeOrder = {
-            code, nick, items, total,
-            timestamp: new Date().toLocaleString(),
-            confirmed: false
-        };
+        activeOrder = { code, nick, items, total, timestamp: new Date().toLocaleString(), confirmed: false };
 
         cart = [];
         updateCart();
         nickInput.value = '';
         document.getElementById('user-balance').textContent = getBalance(nick);
 
-        alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC\n\nКод действителен до подтверждения администратором.`);
+        alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC`);
         renderAdminPanel();
     });
 
     // ============================================================
-    // ========== АВТОРИЗАЦИЯ (МОДАЛЬНЫЕ ОКНА) ==========
+    // ========== АВТОРИЗАЦИЯ ==========
     // ============================================================
     const modal = document.getElementById('auth-modal');
     const modalBody = document.getElementById('modal-body');
@@ -469,20 +473,15 @@
         modal.classList.remove('hidden');
     }
 
-    document.getElementById('modal-close').addEventListener('click', () => {
-        modal.classList.add('hidden');
-    });
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.add('hidden');
-    });
+    document.getElementById('modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
 
-    // ---- Регистрация ----
     document.getElementById('register-btn-header').addEventListener('click', () => {
         openModal('Регистрация', `
             <div class="flex-row" style="flex-direction:column; align-items:stretch;">
                 <input type="text" id="reg-login" class="auth-input" placeholder="Новый логин" style="width:100%;">
                 <input type="password" id="reg-password" class="auth-input" placeholder="Пароль" style="width:100%;">
-                <button class="btn-confirm" id="modal-register-btn" style="width:100%;">Создать аккаунт</button>
+                <button class="btn-confirm" id="modal-register-btn" style="width:100%;">Создать</button>
             </div>
         `);
         document.getElementById('modal-register-btn').addEventListener('click', () => {
@@ -490,22 +489,19 @@
             const password = document.getElementById('reg-password').value.trim();
             if (!login || !password) {
                 modalMsg.textContent = '❌ Заполните оба поля';
-                modalMsg.style.color = '#ff6b6b';
-                return;
+                modalMsg.style.color = '#ff6b6b'; return;
             }
             if (adminDB[login]) {
-                modalMsg.textContent = '❌ Логин уже занят';
-                modalMsg.style.color = '#ff6b6b';
-                return;
+                modalMsg.textContent = '❌ Логин занят';
+                modalMsg.style.color = '#ff6b6b'; return;
             }
             adminDB[login] = password;
             modalMsg.textContent = '✅ Аккаунт создан! Войдите.';
             modalMsg.style.color = '#b79aff';
-            setTimeout(() => { modal.classList.add('hidden'); }, 1500);
+            setTimeout(() => modal.classList.add('hidden'), 1500);
         });
     });
 
-    // ---- Вход ----
     document.getElementById('login-btn').addEventListener('click', () => {
         openModal('Вход', `
             <div class="flex-row" style="flex-direction:column; align-items:stretch;">
@@ -523,7 +519,7 @@
                 modalMsg.style.color = '#b79aff';
                 updateAuthUI();
                 renderAdminPanel();
-                setTimeout(() => { modal.classList.add('hidden'); }, 1000);
+                setTimeout(() => modal.classList.add('hidden'), 1000);
             } else {
                 modalMsg.textContent = '❌ Неверный логин или пароль';
                 modalMsg.style.color = '#ff6b6b';
@@ -531,32 +527,31 @@
         });
     });
 
-    // ---- Выход ----
     document.getElementById('logout-btn').addEventListener('click', () => {
         adminSession = null;
         updateAuthUI();
         document.getElementById('admin-panel').classList.add('hidden');
     });
 
-    // ---- Обновление UI шапки ----
     function updateAuthUI() {
         const display = document.getElementById('user-display');
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn-header');
         const logoutBtn = document.getElementById('logout-btn');
+        const panel = document.getElementById('admin-panel');
 
         if (adminSession) {
             display.textContent = adminSession.login;
             loginBtn.classList.add('hidden');
             registerBtn.classList.add('hidden');
             logoutBtn.classList.remove('hidden');
-            document.getElementById('admin-panel').classList.remove('hidden');
+            panel.classList.remove('hidden');
         } else {
             display.textContent = 'Гость';
             loginBtn.classList.remove('hidden');
             registerBtn.classList.remove('hidden');
             logoutBtn.classList.add('hidden');
-            document.getElementById('admin-panel').classList.add('hidden');
+            panel.classList.add('hidden');
         }
     }
 
@@ -577,9 +572,9 @@
             ).join('');
             ordersHtml = `
                 <div class="order-info">
-                    <p><span>Код заказа:</span> <span class="order-code">${activeOrder.code}</span></p>
+                    <p><span>Код:</span> <span class="order-code">${activeOrder.code}</span></p>
                     <p><span>Игрок:</span> ${activeOrder.nick}</p>
-                    <p><span>Дата и время:</span> ${activeOrder.timestamp}</p>
+                    <p><span>Время:</span> ${activeOrder.timestamp}</p>
                     <p><span>Сумма:</span> ${activeOrder.total} VC</p>
                     <p><span>Услуги:</span></p>
                     <ul>${itemsList}</ul>
@@ -593,7 +588,9 @@
             ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
         }
 
-        const giveHtml = `
+        content.innerHTML = `
+            ${ordersHtml}
+            <hr style="border-color:#26203b; margin:25px 0;">
             <div class="give-box">
                 <h3 style="color:#c6b5ff; margin-bottom:12px;">💎 Выдать VC</h3>
                 <div class="flex-row">
@@ -605,13 +602,6 @@
             </div>
         `;
 
-        content.innerHTML = `
-            ${ordersHtml}
-            <hr style="border-color:#26203b; margin:25px 0;">
-            ${giveHtml}
-        `;
-
-        // Обработчики
         document.getElementById('confirm-order-btn')?.addEventListener('click', () => {
             if (activeOrder && !activeOrder.confirmed) {
                 activeOrder.confirmed = true;
@@ -635,7 +625,7 @@
             const amount = parseInt(document.getElementById('give-amount').value.trim());
             const msg = document.getElementById('give-msg');
             if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
-            if (!amount || amount <= 0) { msg.textContent = '❌ Введите сумму > 0'; msg.style.color = '#ff6b6b'; return; }
+            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
             addBalance(nick, amount);
             msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
             msg.style.color = '#b79aff';
