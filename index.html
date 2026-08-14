@@ -10,7 +10,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: #0b081a;
             color: #d9d0f0;
@@ -21,13 +20,11 @@
             flex-direction: column;
             align-items: center;
         }
-
         .container {
             max-width: 1200px;
             width: 100%;
         }
-
-        /* ——— ШАПКА С ЛОГОТИПОМ ——— */
+        /* шапка */
         .header {
             display: flex;
             align-items: center;
@@ -37,20 +34,17 @@
             margin-bottom: 30px;
             flex-wrap: wrap;
         }
-
         .logo-svg {
             width: 70px;
             height: 70px;
             flex-shrink: 0;
         }
-
         .logo-svg svg {
             width: 100%;
             height: 100%;
             display: block;
             filter: drop-shadow(0 0 12px #9b7bff66);
         }
-
         .header h1 {
             font-size: 2.2rem;
             font-weight: 700;
@@ -59,7 +53,6 @@
             -webkit-text-fill-color: transparent;
             letter-spacing: 1px;
         }
-
         .header .currency {
             margin-left: auto;
             background: #241d3a;
@@ -70,15 +63,26 @@
             font-size: 1.1rem;
             color: #c6b5ff;
         }
-
-        /* ——— СЕТКА УСЛУГ ——— */
+        .header .admin-btn {
+            background: #2a1f42;
+            border: 1px solid #5b3f8a;
+            border-radius: 40px;
+            padding: 8px 20px;
+            color: #c6b5ff;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .header .admin-btn:hover {
+            background: #3b2b5a;
+            border-color: #9b7bff;
+        }
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 24px;
             margin: 30px 0 50px;
         }
-
         .service-card {
             background: #18122b;
             border: 1px solid #32284a;
@@ -89,19 +93,16 @@
             display: flex;
             flex-direction: column;
         }
-
         .service-card:hover {
             border-color: #9b7bff;
             transform: translateY(-5px);
             box-shadow: 0 12px 30px rgba(100, 60, 255, 0.25);
         }
-
         .service-card h3 {
             font-size: 1.3rem;
             margin-bottom: 8px;
             color: #e5daff;
         }
-
         .service-card p {
             color: #a99bc9;
             font-size: 0.95rem;
@@ -109,7 +110,6 @@
             flex-grow: 1;
             margin-bottom: 16px;
         }
-
         .service-card .price {
             font-weight: 700;
             font-size: 1.2rem;
@@ -117,7 +117,6 @@
             margin-bottom: 16px;
             display: block;
         }
-
         .service-card button {
             background: #6b47d9;
             border: none;
@@ -131,22 +130,18 @@
             width: 100%;
             letter-spacing: 0.5px;
         }
-
         .service-card button:hover {
             background: #8b6aff;
             box-shadow: 0 0 20px #6b47d966;
         }
-
-        /* ——— КОРЗИНА ——— */
-        .cart-section {
+        .cart-section, .admin-section {
             background: #130f21;
             border-radius: 28px;
             padding: 28px 30px;
             border: 1px solid #32284a;
             margin-top: 20px;
         }
-
-        .cart-section h2 {
+        .cart-section h2, .admin-section h2 {
             font-size: 1.8rem;
             margin-bottom: 16px;
             color: #d4c5ff;
@@ -154,29 +149,25 @@
             align-items: center;
             gap: 12px;
         }
-
-        .cart-section ul {
+        .cart-section ul, .admin-section ul {
             list-style: none;
             padding: 0;
             margin: 0 0 20px 0;
         }
-
-        .cart-section li {
+        .cart-section li, .admin-section li {
             padding: 8px 0;
             border-bottom: 1px solid #26203b;
             display: flex;
             justify-content: space-between;
             font-size: 1rem;
         }
-
         .cart-total {
             font-size: 1.4rem;
             font-weight: 700;
             color: #c2adff;
             margin: 10px 0 20px;
         }
-
-        .btn-buy {
+        .btn-buy, .btn-confirm {
             background: #a07cff;
             border: none;
             border-radius: 60px;
@@ -187,26 +178,104 @@
             cursor: pointer;
             transition: 0.25s;
             box-shadow: 0 0 20px #7a4cff55;
+            margin-right: 15px;
         }
-
-        .btn-buy:hover {
+        .btn-buy:hover, .btn-confirm:hover {
             background: #bea5ff;
             box-shadow: 0 0 40px #7a4cffaa;
             transform: scale(1.02);
         }
-
+        .btn-danger {
+            background: #4a2a4a;
+            color: #d9d0f0;
+        }
+        .btn-danger:hover {
+            background: #6a3a5a;
+        }
         .empty-cart {
             color: #7a6a9a;
             font-style: italic;
         }
-
-        /* ——— АДАПТИВ ——— */
+        .order-code {
+            background: #0b081a;
+            padding: 15px 25px;
+            border-radius: 60px;
+            border: 1px solid #6b47d9;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #b79aff;
+            display: inline-block;
+            margin: 10px 0 20px;
+        }
+        .order-info {
+            background: #18122b;
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-left: 4px solid #9b7bff;
+        }
+        .order-info p {
+            margin: 6px 0;
+            color: #c6b5ff;
+        }
+        .order-info span {
+            color: #e5daff;
+            font-weight: 600;
+        }
+        .flex-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .hidden {
+            display: none;
+        }
+        .nick-input, .auth-input {
+            background: #0b081a;
+            border: 1px solid #3b2b5a;
+            color: #d9d0f0;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .nick-input {
+            width: 200px;
+        }
+        .auth-input {
+            width: 160px;
+        }
+        .nick-input:focus, .auth-input:focus {
+            border-color: #9b7bff;
+        }
+        .auth-box {
+            background: #18122b;
+            padding: 20px 25px;
+            border-radius: 20px;
+            border: 1px solid #32284a;
+            margin: 15px 0;
+            max-width: 400px;
+        }
+        .auth-box .flex-row {
+            gap: 10px;
+        }
+        .auth-box .btn-confirm {
+            padding: 10px 25px;
+            font-size: 1rem;
+        }
+        .auth-msg {
+            color: #7a6a9a;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
         @media (max-width: 600px) {
             .header {
                 flex-direction: column;
                 align-items: flex-start;
             }
-            .header .currency {
+            .header .currency, .header .admin-btn {
                 margin-left: 0;
             }
             .header h1 {
@@ -215,116 +284,333 @@
             .services-grid {
                 grid-template-columns: 1fr;
             }
+            .flex-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .nick-input, .auth-input {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="container">
 
-        <!-- ===== ШАПКА ===== -->
-        <header class="header">
-            <div class="logo-svg">
-                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2 6 L6 2 L10 6 L6 10 L2 6 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M14 14 L18 10 L14 6 L10 10 L14 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M6 14 L10 18 L14 14 L10 10 L6 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
-                    <circle cx="10" cy="10" r="2" fill="#9b7bff" opacity="0.5"/>
-                </svg>
-            </div>
-            <h1>VOID · RichClan</h1>
-            <span class="currency">💎 VC</span>
-        </header>
-
-        <!-- ===== УСЛУГИ ===== -->
-        <div id="services-list" class="services-grid">
-            <!-- загружаются из JSON -->
+    <!-- ШАПКА -->
+    <header class="header">
+        <div class="logo-svg">
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 6 L6 2 L10 6 L6 10 L2 6 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M14 14 L18 10 L14 6 L10 10 L14 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M6 14 L10 18 L14 14 L10 10 L6 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
+                <circle cx="10" cy="10" r="2" fill="#9b7bff" opacity="0.5"/>
+            </svg>
         </div>
+        <h1>VOID · RichClan</h1>
+        <span class="currency">💎 VC</span>
+        <button class="admin-btn" id="toggle-admin-btn">🔐 Админ</button>
+    </header>
 
-        <!-- ===== КОРЗИНА ===== -->
-        <section class="cart-section" id="cart">
-            <h2>🛒 Корзина</h2>
-            <ul id="cart-items">
-                <li class="empty-cart">Пока пусто</li>
-            </ul>
-            <div class="cart-total">Итого: <span id="total-price">0</span> VC</div>
-            <button class="btn-buy" id="buy-btn">Оформить заказ</button>
-        </section>
+    <!-- УСЛУГИ -->
+    <div id="services-list" class="services-grid"></div>
 
-    </div>
+    <!-- КОРЗИНА -->
+    <section class="cart-section" id="cart">
+        <h2>🛒 Корзина</h2>
+        <div class="flex-row" style="margin-bottom: 20px;">
+            <input type="text" id="player-nick" class="nick-input" placeholder="Ваш игровой ник" required>
+            <span style="color:#7a6a9a; font-size:0.9rem;">(обязательно для заказа)</span>
+        </div>
+        <ul id="cart-items"><li class="empty-cart">Пока пусто</li></ul>
+        <div class="cart-total">Итого: <span id="total-price">0</span> VC</div>
+        <button class="btn-buy" id="buy-btn">Оформить заказ</button>
+    </section>
 
-    <script>
-        let cart = [];
-        let servicesData = [];
+    <!-- АДМИН-ПАНЕЛЬ (скрыта по умолчанию) -->
+    <section class="admin-section hidden" id="admin-panel">
+        <h2>🔐 Админ-панель</h2>
+        <div id="admin-content">
+            <!-- сюда динамически подставляется содержимое -->
+        </div>
+    </section>
 
-        // ——— ЗАГРУЗКА УСЛУГ ———
-        fetch('services.json')
-            .then(res => {
-                if (!res.ok) throw new Error('Не удалось загрузить услуги');
-                return res.json();
-            })
-            .then(data => {
-                servicesData = data;
-                renderServices(data);
-            })
-            .catch(err => {
-                document.getElementById('services-list').innerHTML =
-                    `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги. Проверьте файл services.json</p>`;
-                console.error(err);
-            });
+</div>
 
-        function renderServices(services) {
-            const container = document.getElementById('services-list');
-            container.innerHTML = '';
-            services.forEach(service => {
-                const card = document.createElement('div');
-                card.className = 'service-card';
-                card.innerHTML = `
-                    <h3>${service.name}</h3>
-                    <p>${service.description}</p>
-                    <span class="price">${service.price} VC</span>
-                    <button onclick="addToCart(${service.id})">В корзину</button>
-                `;
-                container.appendChild(card);
-            });
-        }
+<script>
+    // ========== ДАННЫЕ ==========
+    let cart = [];
+    let servicesData = [];
+    let activeOrder = null; // { code, nick, items, total, timestamp, confirmed }
 
-        // ——— ДОБАВЛЕНИЕ В КОРЗИНУ ———
-        function addToCart(id) {
-            const service = servicesData.find(s => s.id === id);
-            if (!service) return;
-            cart.push(service);
-            updateCart();
-        }
+    // ========== АВТОРИЗАЦИЯ ==========
+    let adminSession = null; // { login }
 
-        function updateCart() {
-            const list = document.getElementById('cart-items');
-            const totalSpan = document.getElementById('total-price');
-            list.innerHTML = '';
-            if (cart.length === 0) {
-                list.innerHTML = '<li class="empty-cart">Пока пусто</li>';
-                totalSpan.textContent = '0';
-                return;
-            }
-            let sum = 0;
-            cart.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span>${item.name}</span><span>${item.price} VC</span>`;
-                list.appendChild(li);
-                sum += item.price;
-            });
-            totalSpan.textContent = sum;
-        }
+    // Встроенная "база" админов (для демонстрации — в реальном проекте хранить на сервере)
+    const adminDB = {
+        'admin': 'void2026',
+        'fox': 'limusss'
+    };
 
-        // ——— ОФОРМЛЕНИЕ ЗАКАЗА ———
-        document.getElementById('buy-btn').addEventListener('click', () => {
-            if (cart.length === 0) {
-                alert('Корзина пуста! Добавьте услуги.');
-                return;
-            }
-            alert('✅ Заказ оформлен! Свяжитесь с администратором для подтверждения.');
-            cart = [];
-            updateCart();
+    // ========== ЗАГРУЗКА УСЛУГ ==========
+    fetch('services.json')
+        .then(res => {
+            if (!res.ok) throw new Error('Не удалось загрузить услуги');
+            return res.json();
+        })
+        .then(data => {
+            servicesData = data;
+            renderServices(data);
+        })
+        .catch(err => {
+            document.getElementById('services-list').innerHTML =
+                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги. Проверьте файл services.json</p>`;
+            console.error(err);
         });
-    </script>
+
+    function renderServices(services) {
+        const container = document.getElementById('services-list');
+        container.innerHTML = '';
+        services.forEach(service => {
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.innerHTML = `
+                <h3>${service.name}</h3>
+                <p>${service.description}</p>
+                <span class="price">${service.price} VC</span>
+                <button onclick="addToCart(${service.id})">В корзину</button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // ========== КОРЗИНА ==========
+    function addToCart(id) {
+        const service = servicesData.find(s => s.id === id);
+        if (!service) return;
+        cart.push(service);
+        updateCart();
+    }
+
+    function updateCart() {
+        const list = document.getElementById('cart-items');
+        const totalSpan = document.getElementById('total-price');
+        list.innerHTML = '';
+        if (cart.length === 0) {
+            list.innerHTML = '<li class="empty-cart">Пока пусто</li>';
+            totalSpan.textContent = '0';
+            return;
+        }
+        let sum = 0;
+        cart.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${item.name}</span><span>${item.price} VC</span>`;
+            list.appendChild(li);
+            sum += item.price;
+        });
+        totalSpan.textContent = sum;
+    }
+
+    // ========== ГЕНЕРАЦИЯ КОДА ==========
+    function generateOrderCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
+    document.getElementById('buy-btn').addEventListener('click', () => {
+        const nickInput = document.getElementById('player-nick');
+        const nick = nickInput.value.trim();
+
+        if (!nick) {
+            alert('Пожалуйста, укажите ваш игровой ник!');
+            nickInput.focus();
+            return;
+        }
+
+        if (cart.length === 0) {
+            alert('Корзина пуста! Добавьте услуги.');
+            return;
+        }
+
+        // Если есть активный неподтверждённый заказ
+        if (activeOrder && !activeOrder.confirmed) {
+            if (!confirm('У вас уже есть активный заказ. Заменить его новым?')) {
+                return;
+            }
+        }
+
+        const code = generateOrderCode();
+        const total = cart.reduce((sum, item) => sum + item.price, 0);
+        const items = cart.map(item => ({ name: item.name, price: item.price }));
+
+        activeOrder = {
+            code: code,
+            nick: nick,
+            items: items,
+            total: total,
+            timestamp: new Date().toLocaleString(),
+            confirmed: false
+        };
+
+        cart = [];
+        updateCart();
+        nickInput.value = '';
+
+        renderAdminPanel();
+        alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC\n\nКод действителен до подтверждения администратором.`);
+    });
+
+    // ========== АДМИН-ПАНЕЛЬ ==========
+    function renderAdminPanel() {
+        const content = document.getElementById('admin-content');
+
+        if (!adminSession) {
+            content.innerHTML = `
+                <div class="auth-box">
+                    <p style="color:#c6b5ff; margin-bottom:15px;">Войдите как администратор</p>
+                    <div class="flex-row">
+                        <input type="text" id="admin-login" class="auth-input" placeholder="Логин">
+                        <input type="password" id="admin-password" class="auth-input" placeholder="Пароль">
+                        <button class="btn-confirm" id="admin-login-btn">Войти</button>
+                    </div>
+                    <div id="auth-msg" class="auth-msg"></div>
+                    <div style="margin-top:12px; border-top:1px solid #26203b; padding-top:12px;">
+                        <p style="font-size:0.85rem; color:#7a6a9a;">Нет аккаунта? <button id="show-register-btn" style="background:none; border:none; color:#9b7bff; cursor:pointer; text-decoration:underline;">Зарегистрироваться</button></p>
+                        <div id="register-box" class="hidden" style="margin-top:10px;">
+                            <div class="flex-row">
+                                <input type="text" id="reg-login" class="auth-input" placeholder="Новый логин">
+                                <input type="password" id="reg-password" class="auth-input" placeholder="Пароль">
+                                <button class="btn-confirm" id="register-btn">Создать</button>
+                            </div>
+                            <div id="reg-msg" class="auth-msg"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('admin-login-btn').addEventListener('click', () => {
+                const login = document.getElementById('admin-login').value.trim();
+                const password = document.getElementById('admin-password').value.trim();
+                const msg = document.getElementById('auth-msg');
+
+                if (adminDB[login] && adminDB[login] === password) {
+                    adminSession = { login };
+                    msg.textContent = '✅ Вход выполнен';
+                    msg.style.color = '#b79aff';
+                    renderAdminPanel();
+                } else {
+                    msg.textContent = '❌ Неверный логин или пароль';
+                    msg.style.color = '#ff6b6b';
+                }
+            });
+
+            document.getElementById('show-register-btn').addEventListener('click', () => {
+                const box = document.getElementById('register-box');
+                box.classList.toggle('hidden');
+            });
+
+            document.getElementById('register-btn').addEventListener('click', () => {
+                const login = document.getElementById('reg-login').value.trim();
+                const password = document.getElementById('reg-password').value.trim();
+                const msg = document.getElementById('reg-msg');
+
+                if (!login || !password) {
+                    msg.textContent = '❌ Заполните оба поля';
+                    msg.style.color = '#ff6b6b';
+                    return;
+                }
+                if (adminDB[login]) {
+                    msg.textContent = '❌ Логин уже занят';
+                    msg.style.color = '#ff6b6b';
+                    return;
+                }
+                adminDB[login] = password;
+                msg.textContent = '✅ Аккаунт создан! Войдите';
+                msg.style.color = '#b79aff';
+                document.getElementById('reg-login').value = '';
+                document.getElementById('reg-password').value = '';
+                setTimeout(() => {
+                    document.getElementById('register-box').classList.add('hidden');
+                }, 1500);
+            });
+
+            return;
+        }
+
+        // Админ авторизован
+        if (!activeOrder || activeOrder.confirmed) {
+            content.innerHTML = `
+                <p style="color:#7a6a9a;">Нет активных заказов.</p>
+                <div style="margin-top:15px;">
+                    <button class="btn-danger" id="admin-logout-btn">🚪 Выйти</button>
+                </div>
+            `;
+            document.getElementById('admin-logout-btn')?.addEventListener('click', () => {
+                adminSession = null;
+                renderAdminPanel();
+            });
+            return;
+        }
+
+        const itemsList = activeOrder.items.map(item =>
+            `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+        ).join('');
+
+        content.innerHTML = `
+            <div class="order-info">
+                <p><span>Код заказа:</span> <span class="order-code">${activeOrder.code}</span></p>
+                <p><span>Игрок:</span> ${activeOrder.nick}</p>
+                <p><span>Дата и время:</span> ${activeOrder.timestamp}</p>
+                <p><span>Сумма:</span> ${activeOrder.total} VC</p>
+                <p><span>Услуги:</span></p>
+                <ul>${itemsList}</ul>
+            </div>
+            <div class="flex-row">
+                <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
+                <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
+                <button class="btn-danger" id="admin-logout-btn">🚪 Выйти</button>
+            </div>
+        `;
+
+        document.getElementById('confirm-order-btn').addEventListener('click', () => {
+            if (activeOrder && !activeOrder.confirmed) {
+                activeOrder.confirmed = true;
+                alert(`✅ Заказ ${activeOrder.code} подтверждён!`);
+                renderAdminPanel();
+            }
+        });
+
+        document.getElementById('cancel-order-btn').addEventListener('click', () => {
+            if (activeOrder && !activeOrder.confirmed) {
+                if (confirm(`Отменить заказ ${activeOrder.code}?`)) {
+                    activeOrder = null;
+                    renderAdminPanel();
+                }
+            }
+        });
+
+        document.getElementById('admin-logout-btn')?.addEventListener('click', () => {
+            adminSession = null;
+            renderAdminPanel();
+        });
+    }
+
+    // ========== ПОКАЗАТЬ/СКРЫТЬ АДМИН-ПАНЕЛЬ ==========
+    const adminPanel = document.getElementById('admin-panel');
+    document.getElementById('toggle-admin-btn').addEventListener('click', () => {
+        adminPanel.classList.toggle('hidden');
+        if (!adminPanel.classList.contains('hidden')) {
+            renderAdminPanel();
+        }
+    });
+
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    updateCart();
+</script>
 </body>
 </html>
