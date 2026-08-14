@@ -3,26 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RichClan Shop</title>
-    <link rel="stylesheet" href="style.css">
+    <title>VOID · RichClan Shop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b081a;
+            color: #d9d0f0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 30px 20px 60px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ——— ШАПКА С ЛОГОТИПОМ ——— */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid #3b2b5a;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .logo-svg {
+            width: 70px;
+            height: 70px;
+            flex-shrink: 0;
+        }
+
+        .logo-svg svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0 0 12px #9b7bff66);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #b79aff, #7a4cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .header .currency {
+            margin-left: auto;
+            background: #241d3a;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #5b3f8a;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #c6b5ff;
+        }
+
+        /* ——— СЕТКА УСЛУГ ——— */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+            margin: 30px 0 50px;
+        }
+
+        .service-card {
+            background: #18122b;
+            border: 1px solid #32284a;
+            border-radius: 20px;
+            padding: 22px 18px 20px;
+            transition: 0.25s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-card:hover {
+            border-color: #9b7bff;
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(100, 60, 255, 0.25);
+        }
+
+        .service-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #e5daff;
+        }
+
+        .service-card p {
+            color: #a99bc9;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            flex-grow: 1;
+            margin-bottom: 16px;
+        }
+
+        .service-card .price {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #b48aff;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .service-card button {
+            background: #6b47d9;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 0;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            letter-spacing: 0.5px;
+        }
+
+        .service-card button:hover {
+            background: #8b6aff;
+            box-shadow: 0 0 20px #6b47d966;
+        }
+
+        /* ——— КОРЗИНА ——— */
+        .cart-section {
+            background: #130f21;
+            border-radius: 28px;
+            padding: 28px 30px;
+            border: 1px solid #32284a;
+            margin-top: 20px;
+        }
+
+        .cart-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            color: #d4c5ff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cart-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .cart-section li {
+            padding: 8px 0;
+            border-bottom: 1px solid #26203b;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+        }
+
+        .cart-total {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #c2adff;
+            margin: 10px 0 20px;
+        }
+
+        .btn-buy {
+            background: #a07cff;
+            border: none;
+            border-radius: 60px;
+            padding: 14px 40px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #0b081a;
+            cursor: pointer;
+            transition: 0.25s;
+            box-shadow: 0 0 20px #7a4cff55;
+        }
+
+        .btn-buy:hover {
+            background: #bea5ff;
+            box-shadow: 0 0 40px #7a4cffaa;
+            transform: scale(1.02);
+        }
+
+        .empty-cart {
+            color: #7a6a9a;
+            font-style: italic;
+        }
+
+        /* ——— АДАПТИВ ——— */
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header .currency {
+                margin-left: 0;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>🏴 RichClan Shop</h1>
-        <span>Валюта: VC</span>
-    </header>
+    <div class="container">
 
-    <main id="services-list">
-        <!-- Здесь будут карточки услуг -->
-    </main>
+        <!-- ===== ШАПКА ===== -->
+        <header class="header">
+            <div class="logo-svg">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 6 L6 2 L10 6 L6 10 L2 6 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M14 14 L18 10 L14 6 L10 10 L14 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M6 14 L10 18 L14 14 L10 10 L6 14 Z" stroke="#9b7bff" stroke-width="1.8" stroke-linejoin="round"/>
+                    <circle cx="10" cy="10" r="2" fill="#9b7bff" opacity="0.5"/>
+                </svg>
+            </div>
+            <h1>VOID · RichClan</h1>
+            <span class="currency">💎 VC</span>
+        </header>
 
-    <div id="cart">
-        <h2>🛒 Корзина</h2>
-        <ul id="cart-items"></ul>
-        <p>Итого: <span id="total-price">0</span> VC</p>
-        <button id="buy-btn">Купить</button>
+        <!-- ===== УСЛУГИ ===== -->
+        <div id="services-list" class="services-grid">
+            <!-- загружаются из JSON -->
+        </div>
+
+        <!-- ===== КОРЗИНА ===== -->
+        <section class="cart-section" id="cart">
+            <h2>🛒 Корзина</h2>
+            <ul id="cart-items">
+                <li class="empty-cart">Пока пусто</li>
+            </ul>
+            <div class="cart-total">Итого: <span id="total-price">0</span> VC</div>
+            <button class="btn-buy" id="buy-btn">Оформить заказ</button>
+        </section>
+
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        let cart = [];
+        let servicesData = [];
+
+        // ——— ЗАГРУЗКА УСЛУГ ———
+        fetch('services.json')
+            .then(res => {
+                if (!res.ok) throw new Error('Не удалось загрузить услуги');
+                return res.json();
+            })
+            .then(data => {
+                servicesData = data;
+                renderServices(data);
+            })
+            .catch(err => {
+                document.getElementById('services-list').innerHTML =
+                    `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги. Проверьте файл services.json</p>`;
+                console.error(err);
+            });
+
+        function renderServices(services) {
+            const container = document.getElementById('services-list');
+            container.innerHTML = '';
+            services.forEach(service => {
+                const card = document.createElement('div');
+                card.className = 'service-card';
+                card.innerHTML = `
+                    <h3>${service.name}</h3>
+                    <p>${service.description}</p>
+                    <span class="price">${service.price} VC</span>
+                    <button onclick="addToCart(${service.id})">В корзину</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ——— ДОБАВЛЕНИЕ В КОРЗИНУ ———
+        function addToCart(id) {
+            const service = servicesData.find(s => s.id === id);
+            if (!service) return;
+            cart.push(service);
+            updateCart();
+        }
+
+        function updateCart() {
+            const list = document.getElementById('cart-items');
+            const totalSpan = document.getElementById('total-price');
+            list.innerHTML = '';
+            if (cart.length === 0) {
+                list.innerHTML = '<li class="empty-cart">Пока пусто</li>';
+                totalSpan.textContent = '0';
+                return;
+            }
+            let sum = 0;
+            cart.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${item.name}</span><span>${item.price} VC</span>`;
+                list.appendChild(li);
+                sum += item.price;
+            });
+            totalSpan.textContent = sum;
+        }
+
+        // ——— ОФОРМЛЕНИЕ ЗАКАЗА ———
+        document.getElementById('buy-btn').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('Корзина пуста! Добавьте услуги.');
+                return;
+            }
+            alert('✅ Заказ оформлен! Свяжитесь с администратором для подтверждения.');
+            cart = [];
+            updateCart();
+        });
+    </script>
 </body>
 </html>
