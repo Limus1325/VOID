@@ -233,7 +233,6 @@
     <header class="header">
         <div class="logo-svg">
             <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Преобразованный логотип из JSON -->
                 <polyline points="-10.0,-6.51 -7.27,-3.57 -4.54,-0.64 -1.81,2.3 0.02,4.67" stroke="#9b7bff" stroke-width="1.2" fill="none"/>
                 <polyline points="-10.0,-6.51 -6.0,-6.51 -2.0,-6.51 2.0,-6.51 6.0,-6.51 9.99,-6.51" stroke="#9b7bff" stroke-width="1.2" fill="none"/>
                 <polyline points="-5.04,-4.53 -4.84,-0.54 -4.74,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
@@ -244,7 +243,6 @@
                 <polyline points="0.02,4.67 2.75,1.75 5.48,-1.17 8.21,-4.09 9.99,-6.51" stroke="#7a4cff" stroke-width="1.2" stroke-dasharray="2 2" fill="none"/>
                 <polyline points="1.34,-5.55 4.36,-2.91 4.76,-2.44" stroke="#b79aff" stroke-width="1.2" fill="none"/>
                 <polyline points="4.76,-4.53 4.76,-0.54 4.76,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <!-- Светящиеся точки -->
                 <circle cx="0.02" cy="4.67" r="0.4" fill="#9b7bff" opacity="0.8"/>
                 <circle cx="-10.0" cy="-6.51" r="0.4" fill="#7a4cff" opacity="0.6"/>
                 <circle cx="9.99" cy="-6.51" r="0.4" fill="#7a4cff" opacity="0.6"/>
@@ -337,7 +335,7 @@
         })
         .catch(err => {
             document.getElementById('services-list').innerHTML =
-                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги.</p>`;
+                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги. Проверьте файл services.json</p>`;
             console.error(err);
         });
 
@@ -401,8 +399,12 @@
 
     document.getElementById('check-balance-btn').addEventListener('click', () => {
         const nick = document.getElementById('balance-nick').value.trim();
-        if (!nick) { alert('Введите ник'); return; }
-        document.getElementById('user-balance').textContent = getBalance(nick);
+        if (!nick) {
+            alert('Введите ник');
+            return;
+        }
+        const balance = getBalance(nick);
+        document.getElementById('user-balance').textContent = balance;
     });
 
     // ============================================================
@@ -439,7 +441,7 @@
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
         if (getBalance(nick) < total) {
-            alert(`❌ Недостаточно VC. Баланс: ${getBalance(nick)} VC`);
+            alert(`❌ Недостаточно VC. Ваш баланс: ${getBalance(nick)} VC`);
             return;
         }
 
@@ -452,9 +454,11 @@
         cart = [];
         updateCart();
         nickInput.value = '';
-        document.getElementById('user-balance').textContent = getBalance(nick);
 
         alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC`);
+
+        // Обновляем баланс на экране
+        document.getElementById('user-balance').textContent = getBalance(nick);
         renderAdminPanel();
     });
 
@@ -489,11 +493,13 @@
             const password = document.getElementById('reg-password').value.trim();
             if (!login || !password) {
                 modalMsg.textContent = '❌ Заполните оба поля';
-                modalMsg.style.color = '#ff6b6b'; return;
+                modalMsg.style.color = '#ff6b6b';
+                return;
             }
             if (adminDB[login]) {
-                modalMsg.textContent = '❌ Логин занят';
-                modalMsg.style.color = '#ff6b6b'; return;
+                modalMsg.textContent = '❌ Логин уже занят';
+                modalMsg.style.color = '#ff6b6b';
+                return;
             }
             adminDB[login] = password;
             modalMsg.textContent = '✅ Аккаунт создан! Войдите.';
@@ -625,7 +631,7 @@
             const amount = parseInt(document.getElementById('give-amount').value.trim());
             const msg = document.getElementById('give-msg');
             if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
-            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
+            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма должна быть больше 0'; msg.style.color = '#ff6b6b'; return; }
             addBalance(nick, amount);
             msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
             msg.style.color = '#b79aff';
