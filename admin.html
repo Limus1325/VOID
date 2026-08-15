@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель VOID</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        /* ===== СТИЛИ ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0b081a;
+            color: #d9d0f0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 30px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { max-width: 1000px; width: 100%; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3b2b5a;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 { background: linear-gradient(135deg, #b79aff, #7a4cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-danger { background: #4a2a4a; color: #d9d0f0; border: none; border-radius: 40px; padding: 10px 25px; cursor: pointer; }
+        .btn-danger:hover { background: #6a3a5a; }
+        .admin-box {
+            background: #130f21;
+            border-radius: 28px;
+            padding: 25px 30px;
+            border: 1px solid #32284a;
+            margin-top: 20px;
+        }
+        .admin-box h2 { color: #d4c5ff; margin-bottom: 15px; }
+        .flex-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        input {
+            background: #0b081a;
+            border: 1px solid #3b2b5a;
+            color: #d9d0f0;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-size: 1rem;
+            outline: none;
+            flex: 1;
+            min-width: 150px;
+        }
+        input:focus { border-color: #9b7bff; }
+        .btn-confirm {
+            background: #a07cff;
+            border: none;
+            border-radius: 60px;
+            padding: 10px 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #0b081a;
+            cursor: pointer;
+            transition: 0.25s;
+            box-shadow: 0 0 20px #7a4cff55;
+        }
+        .btn-confirm:hover { background: #bea5ff; box-shadow: 0 0 40px #7a4cffaa; transform: scale(1.02); }
+        .order-card {
+            background: #18122b;
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin: 12px 0;
+            border-left: 4px solid #9b7bff;
+        }
+        .order-card p { margin: 5px 0; color: #c6b5ff; }
+        .order-card span { color: #e5daff; font-weight: 600; }
+        .order-card .code { font-size: 1.3rem; font-weight: 700; color: #b79aff; letter-spacing: 2px; }
+        .order-card ul { list-style: none; padding: 0; margin: 8px 0; }
+        .order-card ul li { padding: 4px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; }
+        .order-actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .order-actions button { padding: 8px 20px; font-size: 0.9rem; }
+        .msg { color: #7a6a9a; margin-top: 8px; }
+        .hidden { display: none; }
+        .login-box { max-width: 400px; margin: 0 auto; }
+        .player-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #26203b; }
+        @media (max-width: 600px) { .flex-row { flex-direction: column; align-items: stretch; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header class="header">
+        <h1>🔐 Админ-панель VOID</h1>
+        <button class="btn-danger" id="admin-logout-btn">Выйти</button>
+    </header>
+
+    <div id="login-section" class="admin-box login-box">
+        <h2>Вход</h2>
+        <div class="flex-row">
+            <input type="password" id="admin-password" placeholder="Пароль админа">
+            <button class="btn-confirm" id="admin-login-btn">Войти</button>
+        </div>
+        <div id="login-msg" class="msg"></div>
+    </div>
+
+    <div id="admin-content" class="hidden">
+        <div class="admin-box">
+            <h2>💎 Выдать VC</h2>
+            <div class="flex-row">
+                <input type="text" id="give-nick" placeholder="Ник игрока">
+                <input type="number" id="give-amount" placeholder="Сумма" min="1">
+                <button class="btn-confirm" id="give-btn">Выдать</button>
+            </div>
+            <div id="give-msg" class="msg"></div>
+        </div>
+
+        <div class="admin-box">
+            <h2>👥 Игроки и балансы</h2>
+            <div id="players-list"></div>
+        </div>
+
+        <div class="admin-box">
+            <h2>🧾 Активные заказы</h2>
+            <div id="orders-list"></div>
+        </div>
+
+        <div class="admin-box">
+            <h2>📦 Архив заказов</h2>
+            <div id="archive-list"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ============================================================
+    // ========== КОНФИГ FIREBASE (ВСТАВЬТЕ СВОЙ) ==========
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
+        authDomain: "void-e6363.firebaseapp.com",
+        databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
+        projectId: "void-e6363",
+        storageBucket: "void-e6363.firebasestorage.app",
+        messagingSenderId: "123260153615",
+        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ============================================================
+    // ========== ДАННЫЕ ==========
+    // ============================================================
+    const ADMIN_PASSWORD = 'void2026';
+    let isAdmin = false;
+
+    // ============================================================
+    // ========== ФУНКЦИИ РАБОТЫ С БАЗОЙ ==========
+    // ============================================================
+    function getBalances() {
+        return db.ref('balances').once('value').then(snap => snap.val() || {});
+    }
+
+    function getOrders() {
+        return db.ref('orders').once('value').then(snap => snap.val() || {});
+    }
+
+    function getPasswords() {
+        return db.ref('passwords').once('value').then(snap => snap.val() || {});
+    }
+
+    function setBalance(nick, amount) {
+        return db.ref('balances/' + nick).set(amount);
+    }
+
+    function updateOrder(code, data) {
+        return db.ref('orders/' + code).update(data);
+    }
+
+    // ============================================================
+    // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
+    // ============================================================
+    async function renderAll() {
+        if (!isAdmin) return;
+
+        // ---- Игроки ----
+        const balances = await getBalances();
+        const passwords = await getPasswords();
+        let playersHtml = '';
+        const nicks = Object.keys(balances);
+        if (nicks.length === 0) {
+            playersHtml = '<p style="color:#7a6a9a;">Нет зарегистрированных игроков.</p>';
+        } else {
+            nicks.forEach(nick => {
+                const hasPass = passwords[nick] ? '🔒' : '🔓';
+                playersHtml += `<div class="player-item"><span>${hasPass} <span style="color:#b79aff;">${nick}</span></span><span>${balances[nick]} VC</span></div>`;
+            });
+        }
+        document.getElementById('players-list').innerHTML = playersHtml;
+
+        // ---- Заказы ----
+        const ordersData = await getOrders();
+        const orders = Object.values(ordersData);
+        const active = orders.filter(o => !o.confirmed);
+        let ordersHtml = '';
+        if (active.length === 0) {
+            ordersHtml = '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
+        } else {
+            active.forEach(order => {
+                const itemsHtml = order.items.map(item =>
+                    `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+                ).join('');
+                ordersHtml += `
+                    <div class="order-card">
+                        <p><span class="code">ЧЕК №${order.code}</span></p>
+                        <p><span>Игрок:</span> ${order.nick}</p>
+                        <p><span>Сумма:</span> ${order.total} VC</p>
+                        <p><span>Дата:</span> ${order.timestamp}</p>
+                        <ul>${itemsHtml}</ul>
+                        <div class="order-actions">
+                            <button class="btn-confirm" onclick="confirmOrder('${order.code}')">✅ Подтвердить</button>
+                            <button class="btn-confirm" style="background:#4a2a4a; color:#d9d0f0;" onclick="cancelOrder('${order.code}')">❌ Отменить</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('orders-list').innerHTML = ordersHtml;
+
+        // ---- Архив ----
+        const archived = orders.filter(o => o.confirmed);
+        let archiveHtml = '';
+        if (archived.length === 0) {
+            archiveHtml = '<p style="color:#7a6a9a;">Архив пуст.</p>';
+        } else {
+            archived.forEach(order => {
+                archiveHtml += `
+                    <div class="order-card" style="border-left-color:#6fcf97;">
+                        <p><span class="code">ЧЕК №${order.code}</span> <span style="color:#6fcf97;">✅ Завершён</span></p>
+                        <p><span>Игрок:</span> ${order.nick} | <span>Сумма:</span> ${order.total} VC</p>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('archive-list').innerHTML = archiveHtml;
+    }
+
+    // ============================================================
+    // ========== ДЕЙСТВИЯ АДМИНА ==========
+    // ============================================================
+    window.confirmOrder = function(code) {
+        updateOrder(code, { confirmed: true });
+        renderAll();
+    };
+
+    window.cancelOrder = async function(code) {
+        const ordersData = await getOrders();
+        const order = ordersData[code];
+        if (order && !order.confirmed) {
+            const balance = await db.ref('balances/' + order.nick).once('value');
+            const current = balance.val() || 0;
+            await setBalance(order.nick, current + order.total);
+            await updateOrder(code, { confirmed: true });
+            renderAll();
+        }
+    };
+
+    document.getElementById('give-btn').addEventListener('click', async () => {
+        const nick = document.getElementById('give-nick').value.trim();
+        const amount = parseInt(document.getElementById('give-amount').value.trim());
+        const msg = document.getElementById('give-msg');
+        if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
+        if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
+        const balance = await db.ref('balances/' + nick).once('value');
+        const current = balance.val() || 0;
+        await setBalance(nick, current + amount);
+        msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
+        msg.style.color = '#b79aff';
+        document.getElementById('give-nick').value = '';
+        document.getElementById('give-amount').value = '';
+        renderAll();
+    });
+
+    // ============================================================
+    // ========== ВХОД / ВЫХОД ==========
+    // ============================================================
+    document.getElementById('admin-login-btn').addEventListener('click', () => {
+        const pass = document.getElementById('admin-password').value.trim();
+        const msg = document.getElementById('login-msg');
+        if (pass === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('admin-content').classList.remove('hidden');
+            document.getElementById('admin-logout-btn').style.display = 'inline-block';
+            renderAll();
+        } else {
+            msg.textContent = '❌ Неверный пароль!';
+            msg.style.color = '#ff6b6b';
+        }
+    });
+
+    document.getElementById('admin-logout-btn').addEventListener('click', () => {
+        isAdmin = false;
+        document.getElementById('login-section').classList.remove('hidden');
+        document.getElementById('admin-content').classList.add('hidden');
+        document.getElementById('admin-logout-btn').style.display = 'none';
+        document.getElementById('admin-password').value = '';
+        document.getElementById('login-msg').textContent = '';
+    });
+
+    // ============================================================
+    // ========== СЛУШАТЕЛИ ОБНОВЛЕНИЙ (ОТРИСОВКА В РЕАЛЬНОМ ВРЕМЕНИ) ==========
+    // ============================================================
+    db.ref('balances').on('value', () => { if (isAdmin) renderAll(); });
+    db.ref('orders').on('value', () => { if (isAdmin) renderAll(); });
+    db.ref('passwords').on('value', () => { if (isAdmin) renderAll(); });
+</script>
+</body>
+</html>
