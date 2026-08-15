@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOID · RichClan Shop</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+            }
+        }
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -17,8 +26,6 @@
             align-items: center;
         }
         .container { max-width: 1200px; width: 100%; }
-
-        /* ===== ШАПКА ===== */
         .header {
             display: flex;
             align-items: center;
@@ -91,8 +98,6 @@
             color: #8bffb0;
         }
         .header .auth-btn.green:hover { background: #2a4a3a; }
-
-        /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -140,9 +145,11 @@
         }
         .cart-section h2, .admin-section h2 { font-size: 1.8rem; margin-bottom: 16px; color: #d4c5ff; display: flex; align-items: center; gap: 12px; }
         .cart-section ul, .admin-section ul { list-style: none; padding: 0; margin: 0 0 20px 0; }
-        .cart-section li, .admin-section li { padding: 8px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; font-size: 1rem; }
+        .cart-section li, .admin-section li { padding: 8px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; }
+        .cart-item-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+        .cart-item-info .item-name { flex: 1; }
         .cart-total { font-size: 1.4rem; font-weight: 700; color: #c2adff; margin: 10px 0 20px; }
-        .btn-buy, .btn-confirm, .btn-give {
+        .btn-buy, .btn-confirm, .btn-give, .btn-remove {
             background: #a07cff;
             border: none;
             border-radius: 60px;
@@ -156,6 +163,15 @@
             margin-right: 15px;
         }
         .btn-buy:hover, .btn-confirm:hover, .btn-give:hover { background: #bea5ff; box-shadow: 0 0 40px #7a4cffaa; transform: scale(1.02); }
+        .btn-remove {
+            background: #4a2a4a;
+            color: #d9d0f0;
+            padding: 4px 14px;
+            font-size: 0.85rem;
+            box-shadow: none;
+            margin-right: 0;
+        }
+        .btn-remove:hover { background: #6a3a5a; }
         .btn-danger { background: #4a2a4a; color: #d9d0f0; }
         .btn-danger:hover { background: #6a3a5a; }
         .empty-cart { color: #7a6a9a; font-style: italic; }
@@ -177,7 +193,6 @@
         .nick-input { width: 200px; }
         .auth-input, .give-input { width: 140px; }
         .nick-input:focus, .auth-input:focus, .give-input:focus { border-color: #9b7bff; }
-
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -209,7 +224,6 @@
         }
         .modal-close:hover { color: #fff; }
         .auth-msg { color: #7a6a9a; font-size: 0.9rem; margin-top: 8px; text-align: center; }
-
         @media (max-width: 600px) {
             .header { flex-direction: column; align-items: flex-start; }
             .header .currency { margin-left: 0; flex-wrap: wrap; }
@@ -272,7 +286,7 @@
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
-    <!-- ===== АДМИН-ПАНЕЛЬ ===== -->
+    <!-- ===== АДМИН-ПАНЕЛЬ (СКРЫТА ДЛЯ НЕ-АДМИНОВ) ===== -->
     <section class="admin-section hidden" id="admin-panel">
         <h2>🔐 Админ-панель</h2>
         <div id="admin-content"></div>
@@ -290,38 +304,83 @@
     </div>
 </div>
 
-<script>
+<script type="module">
     // ============================================================
-    // ========== ДАННЫЕ ==========
+    // ========== ИМПОРТ FIREBASE ==========
+    // ============================================================
+    import { initializeApp } from 'firebase/app';
+    import {
+        getAuth,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+        signOut
+    } from 'firebase/auth';
+    import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc,
+        updateDoc,
+        collection,
+        query,
+        where,
+        getDocs
+    } from 'firebase/firestore';
+
+    // ============================================================
+    // ========== КОНФИГУРАЦИЯ FIREBASE ==========
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
+        authDomain: "void-e6363.firebaseapp.com",
+        databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
+        projectId: "void-e6363",
+        storageBucket: "void-e6363.firebasestorage.app",
+        messagingSenderId: "123260153615",
+        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a",
+        measurementId: "G-Y6FV25WY7Y"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ============================================================
+    // ========== ДАННЫЕ ПРИЛОЖЕНИЯ ==========
     // ============================================================
     let cart = [];
     let servicesData = [];
     let activeOrder = null;
-    let balances = JSON.parse(localStorage.getItem('void_balances')) || {};
-    let adminSession = null;
-
-    const adminDB = {
-        'admin': 'void2026',
-        'fox': 'limusss'
-    };
+    let currentUser = null;
+    let currentUserNick = null;
 
     // ============================================================
-    // ========== ФУНКЦИИ БАЛАНСА ==========
+    // ========== ФУНКЦИИ ДЛЯ FIRESTORE ==========
     // ============================================================
-    function getBalance(nick) { return balances[nick] || 0; }
-    function setBalance(nick, amount) {
-        balances[nick] = Math.max(0, amount);
-        localStorage.setItem('void_balances', JSON.stringify(balances));
-        updateHeaderBalance(nick);
-    }
-    function addBalance(nick, amount) {
-        const current = getBalance(nick);
-        setBalance(nick, current + amount);
+    async function getUserData(nick) {
+        if (!nick) return null;
+        const docRef = doc(db, "users", nick);
+        const docSnap = await getDoc(docRef);
+        return docSnap.exists() ? docSnap.data() : null;
     }
 
-    function updateHeaderBalance(nick) {
-        const bal = getBalance(nick);
-        document.getElementById('header-balance').textContent = bal;
+    async function getBalance(nick) {
+        const data = await getUserData(nick);
+        return data?.balance || 0;
+    }
+
+    async function setBalance(nick, amount) {
+        const docRef = doc(db, "users", nick);
+        await setDoc(docRef, { balance: Math.max(0, amount) }, { merge: true });
+        if (currentUserNick === nick) {
+            document.getElementById('header-balance').textContent = amount;
+        }
+    }
+
+    async function addBalance(nick, amount) {
+        const current = await getBalance(nick);
+        await setBalance(nick, current + amount);
     }
 
     // ============================================================
@@ -352,21 +411,24 @@
                 <h3>${service.name}</h3>
                 <p>${service.description}</p>
                 <span class="price">${service.price} VC</span>
-                <button onclick="addToCart(${service.id})">В корзину</button>
+                <button onclick="window.addToCart(${service.id})">В корзину</button>
             `;
             container.appendChild(card);
         });
     }
 
-    // ============================================================
-    // ========== КОРЗИНА ==========
-    // ============================================================
-    function addToCart(id) {
+    window.addToCart = function(id) {
         const service = servicesData.find(s => s.id === id);
         if (!service) return;
         cart.push(service);
         updateCart();
-    }
+    };
+
+    // ===== УДАЛЕНИЕ ИЗ КОРЗИНЫ =====
+    window.removeFromCart = function(index) {
+        cart.splice(index, 1);
+        updateCart();
+    };
 
     function updateCart() {
         const list = document.getElementById('cart-items');
@@ -378,9 +440,15 @@
             return;
         }
         let sum = 0;
-        cart.forEach(item => {
+        cart.forEach((item, index) => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${item.name}</span><span>${item.price} VC</span>`;
+            li.innerHTML = `
+                <div class="cart-item-info">
+                    <span class="item-name">${item.name}</span>
+                    <span>${item.price} VC</span>
+                    <button class="btn-remove" onclick="window.removeFromCart(${index})">✕</button>
+                </div>
+            `;
             list.appendChild(li);
             sum += item.price;
         });
@@ -402,7 +470,7 @@
     // ============================================================
     // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
     // ============================================================
-    document.getElementById('buy-btn').addEventListener('click', () => {
+    document.getElementById('buy-btn').addEventListener('click', async () => {
         const nickInput = document.getElementById('player-nick');
         const nick = nickInput.value.trim();
 
@@ -420,28 +488,46 @@
         }
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
-        if (getBalance(nick) < total) {
-            alert(`❌ Недостаточно VC. Баланс: ${getBalance(nick)} VC`);
+        const balance = await getBalance(nick);
+        if (balance < total) {
+            alert(`❌ Недостаточно VC. Баланс: ${balance} VC`);
             return;
         }
 
         const code = generateOrderCode();
-        addBalance(nick, -total);
+        await addBalance(nick, -total);
 
         const items = cart.map(item => ({ name: item.name, price: item.price }));
         activeOrder = { code, nick, items, total, timestamp: new Date().toLocaleString(), confirmed: false };
 
+        try {
+            const orderRef = doc(db, "orders", code);
+            await setDoc(orderRef, {
+                nick,
+                items,
+                total,
+                timestamp: new Date().toISOString(),
+                confirmed: false
+            });
+        } catch (e) {
+            console.error("Ошибка сохранения заказа:", e);
+            await addBalance(nick, total);
+            alert('❌ Ошибка при оформлении заказа.');
+            return;
+        }
+
         cart = [];
         updateCart();
         nickInput.value = '';
-        updateHeaderBalance(nick);
-
+        if (currentUserNick === nick) {
+            document.getElementById('header-balance').textContent = await getBalance(nick);
+        }
         alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC`);
         renderAdminPanel();
     });
 
     // ============================================================
-    // ========== МОДАЛЬНЫЕ ОКНА (ВХОД/РЕГИСТРАЦИЯ) ==========
+    // ========== АВТОРИЗАЦИЯ ==========
     // ============================================================
     const modal = document.getElementById('auth-modal');
     const modalBody = document.getElementById('modal-body');
@@ -455,39 +541,49 @@
         modal.classList.add('active');
     }
 
-    document.getElementById('modal-close').addEventListener('click', () => {
-        modal.classList.remove('active');
-    });
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('active');
-    });
+    document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('active'));
+    window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
     // ---- Регистрация ----
     document.getElementById('register-btn-header').addEventListener('click', () => {
         openModal('Регистрация', `
             <div class="flex-row">
-                <input type="text" id="reg-login" class="auth-input" placeholder="Новый логин" style="width:100%;">
+                <input type="email" id="reg-email" class="auth-input" placeholder="Email" style="width:100%;">
                 <input type="password" id="reg-password" class="auth-input" placeholder="Пароль" style="width:100%;">
+                <input type="text" id="reg-nick" class="auth-input" placeholder="Ваш игровой ник" style="width:100%;">
                 <button class="btn-confirm" id="modal-register-btn" style="width:100%;">Создать аккаунт</button>
             </div>
         `);
-        document.getElementById('modal-register-btn').addEventListener('click', () => {
-            const login = document.getElementById('reg-login').value.trim();
+        document.getElementById('modal-register-btn').addEventListener('click', async () => {
+            const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
-            if (!login || !password) {
-                modalMsg.textContent = '❌ Заполните оба поля';
+            const nick = document.getElementById('reg-nick').value.trim();
+
+            if (!email || !password || !nick) {
+                modalMsg.textContent = '❌ Заполните все поля';
                 modalMsg.style.color = '#ff6b6b';
                 return;
             }
-            if (adminDB[login]) {
-                modalMsg.textContent = '❌ Логин уже занят';
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", nick), {
+                    uid: userCredential.user.uid,
+                    email: email,
+                    balance: 0,
+                    createdAt: new Date().toISOString()
+                });
+                modalMsg.textContent = '✅ Аккаунт создан!';
+                modalMsg.style.color = '#b79aff';
+                setTimeout(() => modal.classList.remove('active'), 1200);
+            } catch (error) {
+                let msg = '❌ Ошибка регистрации.';
+                if (error.code === 'auth/email-already-in-use') msg = '❌ Email уже используется.';
+                else if (error.code === 'auth/weak-password') msg = '❌ Слишком слабый пароль.';
+                modalMsg.textContent = msg;
                 modalMsg.style.color = '#ff6b6b';
-                return;
+                console.error(error);
             }
-            adminDB[login] = password;
-            modalMsg.textContent = '✅ Аккаунт создан! Теперь войдите.';
-            modalMsg.style.color = '#b79aff';
-            setTimeout(() => modal.classList.remove('active'), 1200);
         });
     });
 
@@ -495,88 +591,145 @@
     document.getElementById('login-btn').addEventListener('click', () => {
         openModal('Вход', `
             <div class="flex-row">
-                <input type="text" id="login-login" class="auth-input" placeholder="Логин" style="width:100%;">
+                <input type="email" id="login-email" class="auth-input" placeholder="Email" style="width:100%;">
                 <input type="password" id="login-password" class="auth-input" placeholder="Пароль" style="width:100%;">
                 <button class="btn-confirm" id="modal-login-btn" style="width:100%;">Войти</button>
             </div>
         `);
-        document.getElementById('modal-login-btn').addEventListener('click', () => {
-            const login = document.getElementById('login-login').value.trim();
+        document.getElementById('modal-login-btn').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            if (adminDB[login] && adminDB[login] === password) {
-                adminSession = { login };
+
+            if (!email || !password) {
+                modalMsg.textContent = '❌ Заполните оба поля';
+                modalMsg.style.color = '#ff6b6b';
+                return;
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
                 modalMsg.textContent = '✅ Вход выполнен';
                 modalMsg.style.color = '#b79aff';
-                updateAuthUI();
-                renderAdminPanel();
-                setTimeout(() => modal.classList.remove('active'), 800);
-            } else {
-                modalMsg.textContent = '❌ Неверный логин или пароль';
+                setTimeout(() => modal.classList.remove('active'), 1000);
+            } catch (error) {
+                let msg = '❌ Неверный email или пароль.';
+                if (error.code === 'auth/user-not-found') msg = '❌ Пользователь не найден.';
+                else if (error.code === 'auth/wrong-password') msg = '❌ Неверный пароль.';
+                modalMsg.textContent = msg;
                 modalMsg.style.color = '#ff6b6b';
+                console.error(error);
             }
         });
     });
 
     // ---- Выход ----
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        adminSession = null;
-        updateAuthUI();
-        document.getElementById('admin-panel').classList.add('hidden');
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await signOut(auth);
     });
 
-    function updateAuthUI() {
+    // ============================================================
+    // ========== СОСТОЯНИЕ АУТЕНТИФИКАЦИИ ==========
+    // ============================================================
+    const adminEmails = ['admin@void.com', 'fox@void.com']; // <--- ТОЛЬКО ЭТИ ПОЛЬЗОВАТЕЛИ ВИДЯТ АДМИНКУ
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("uid", "==", user.uid));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const docData = querySnapshot.docs[0].data();
+                currentUserNick = querySnapshot.docs[0].id;
+                document.getElementById('header-balance').textContent = docData.balance || 0;
+            } else {
+                currentUserNick = null;
+                document.getElementById('header-balance').textContent = '0';
+            }
+            updateAuthUI(true, user.email);
+            renderAdminPanel(); // <--- админка показывается ТОЛЬКО если email в списке
+            modal.classList.remove('active');
+        } else {
+            currentUser = null;
+            currentUserNick = null;
+            document.getElementById('header-balance').textContent = '0';
+            updateAuthUI(false);
+            document.getElementById('admin-panel').classList.add('hidden');
+        }
+    });
+
+    function updateAuthUI(isLoggedIn, email = '') {
         const display = document.getElementById('user-display');
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn-header');
         const logoutBtn = document.getElementById('logout-btn');
-        const panel = document.getElementById('admin-panel');
 
-        if (adminSession) {
-            display.textContent = adminSession.login;
+        if (isLoggedIn) {
+            display.textContent = email || currentUser?.email || 'Пользователь';
             loginBtn.classList.add('hidden');
             registerBtn.classList.add('hidden');
             logoutBtn.classList.remove('hidden');
-            panel.classList.remove('hidden');
         } else {
             display.textContent = 'Гость';
             loginBtn.classList.remove('hidden');
             registerBtn.classList.remove('hidden');
             logoutBtn.classList.add('hidden');
-            panel.classList.add('hidden');
         }
     }
 
     // ============================================================
-    // ========== АДМИН-ПАНЕЛЬ ==========
+    // ========== АДМИН-ПАНЕЛЬ (ТОЛЬКО ДЛЯ ADMIN EMAILS) ==========
     // ============================================================
-    function renderAdminPanel() {
+    async function renderAdminPanel() {
+        const panel = document.getElementById('admin-panel');
         const content = document.getElementById('admin-content');
-        if (!adminSession) {
-            content.innerHTML = '<p style="color:#7a6a9a;">Войдите как администратор.</p>';
+
+        if (!currentUser) {
+            panel.classList.add('hidden');
             return;
         }
 
+        // Проверяем, входит ли email текущего пользователя в список админов
+        if (!adminEmails.includes(currentUser.email)) {
+            panel.classList.add('hidden');
+            return;
+        }
+
+        // Если админ — показываем панель
+        panel.classList.remove('hidden');
+
+        // Загружаем активные заказы
         let ordersHtml = '';
-        if (activeOrder && !activeOrder.confirmed) {
-            const itemsList = activeOrder.items.map(item =>
-                `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-            ).join('');
-            ordersHtml = `
-                <div class="order-info">
-                    <p><span>Код:</span> <span class="order-code">${activeOrder.code}</span></p>
-                    <p><span>Игрок:</span> ${activeOrder.nick}</p>
-                    <p><span>Время:</span> ${activeOrder.timestamp}</p>
-                    <p><span>Сумма:</span> ${activeOrder.total} VC</p>
-                    <p><span>Услуги:</span></p>
-                    <ul>${itemsList}</ul>
-                </div>
-                <div class="flex-row">
-                    <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
-                    <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
-                </div>
-            `;
-        } else {
-            ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
+        try {
+            const ordersRef = collection(db, "orders");
+            const q = query(ordersRef, where("confirmed", "==", false));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const docData = querySnapshot.docs[0].data();
+                const itemsList = docData.items.map(item =>
+                    `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+                ).join('');
+                ordersHtml = `
+                    <div class="order-info">
+                        <p><span>Код:</span> <span class="order-code">${querySnapshot.docs[0].id}</span></p>
+                        <p><span>Игрок:</span> ${docData.nick}</p>
+                        <p><span>Время:</span> ${new Date(docData.timestamp).toLocaleString()}</p>
+                        <p><span>Сумма:</span> ${docData.total} VC</p>
+                        <p><span>Услуги:</span></p>
+                        <ul>${itemsList}</ul>
+                    </div>
+                    <div class="flex-row">
+                        <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
+                        <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
+                    </div>
+                `;
+            } else {
+                ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
+            }
+        } catch (e) {
+            console.error("Ошибка загрузки заказов:", e);
+            ordersHtml = `<p style="color:#ff6b6b;">Ошибка загрузки заказов.</p>`;
         }
 
         content.innerHTML = `
@@ -593,31 +746,51 @@
             </div>
         `;
 
-        document.getElementById('confirm-order-btn')?.addEventListener('click', () => {
-            if (activeOrder && !activeOrder.confirmed) {
-                activeOrder.confirmed = true;
-                alert(`✅ Заказ ${activeOrder.code} подтверждён!`);
-                renderAdminPanel();
-            }
-        });
-
-        document.getElementById('cancel-order-btn')?.addEventListener('click', () => {
-            if (activeOrder && !activeOrder.confirmed) {
-                if (confirm(`Отменить заказ ${activeOrder.code}?`)) {
-                    addBalance(activeOrder.nick, activeOrder.total);
-                    activeOrder = null;
+        // Подтверждение заказа
+        document.getElementById('confirm-order-btn')?.addEventListener('click', async () => {
+            try {
+                const ordersRef = collection(db, "orders");
+                const q = query(ordersRef, where("confirmed", "==", false));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    await updateDoc(docRef, { confirmed: true });
+                    alert('✅ Заказ подтверждён!');
                     renderAdminPanel();
                 }
+            } catch (e) {
+                console.error("Ошибка подтверждения:", e);
+                alert('❌ Ошибка подтверждения заказа.');
             }
         });
 
-        document.getElementById('give-btn')?.addEventListener('click', () => {
+        // Отмена заказа
+        document.getElementById('cancel-order-btn')?.addEventListener('click', async () => {
+            try {
+                const ordersRef = collection(db, "orders");
+                const q = query(ordersRef, where("confirmed", "==", false));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docData = querySnapshot.docs[0].data();
+                    await addBalance(docData.nick, docData.total);
+                    await updateDoc(querySnapshot.docs[0].ref, { confirmed: true });
+                    alert('❌ Заказ отменён, средства возвращены.');
+                    renderAdminPanel();
+                }
+            } catch (e) {
+                console.error("Ошибка отмены:", e);
+                alert('❌ Ошибка отмены заказа.');
+            }
+        });
+
+        // Выдача VC
+        document.getElementById('give-btn')?.addEventListener('click', async () => {
             const nick = document.getElementById('give-nick').value.trim();
             const amount = parseInt(document.getElementById('give-amount').value.trim());
             const msg = document.getElementById('give-msg');
             if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
             if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
-            addBalance(nick, amount);
+            await addBalance(nick, amount);
             msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
             msg.style.color = '#b79aff';
             document.getElementById('give-nick').value = '';
@@ -629,8 +802,6 @@
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
     // ============================================================
     updateCart();
-    updateAuthUI();
-    renderAdminPanel();
 </script>
 </body>
 </html>
