@@ -4,16 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOID · RichClan Shop</title>
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
-            }
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
-        /* ===== ВСЕ СТИЛИ (без изменений) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0b081a;
@@ -58,46 +50,6 @@
             align-items: center;
             gap: 10px;
         }
-        .header .currency .balance-box {
-            background: #0f0c1e;
-            padding: 4px 12px;
-            border-radius: 30px;
-            border: 1px solid #5b3f8a;
-            font-size: 1rem;
-            color: #e5daff;
-        }
-        .header .auth-area {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #130f21;
-            padding: 6px 12px 6px 18px;
-            border-radius: 60px;
-            border: 1px solid #32284a;
-            flex-wrap: wrap;
-        }
-        .header .auth-area .user-label { color: #7a6a9a; font-size: 0.9rem; }
-        .header .auth-area .user-name { color: #b79aff; font-weight: 600; }
-        .header .auth-btn, .header .logout-btn {
-            background: #2a1f42;
-            border: none;
-            border-radius: 40px;
-            padding: 6px 16px;
-            color: #c6b5ff;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-            font-size: 0.85rem;
-        }
-        .header .auth-btn:hover, .header .logout-btn:hover {
-            background: #3b2b5a;
-            color: #fff;
-        }
-        .header .auth-btn.green {
-            background: #1d3a2a;
-            color: #8bffb0;
-        }
-        .header .auth-btn.green:hover { background: #2a4a3a; }
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -136,7 +88,7 @@
             letter-spacing: 0.5px;
         }
         .service-card button:hover { background: #8b6aff; box-shadow: 0 0 20px #6b47d966; }
-        .cart-section, .admin-section {
+        .cart-section, .admin-section, .check-section {
             background: #130f21;
             border-radius: 28px;
             padding: 28px 30px;
@@ -149,7 +101,7 @@
         .cart-item-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
         .cart-item-info .item-name { flex: 1; }
         .cart-total { font-size: 1.4rem; font-weight: 700; color: #c2adff; margin: 10px 0 20px; }
-        .btn-buy, .btn-confirm, .btn-give, .btn-remove {
+        .btn-buy, .btn-confirm, .btn-remove {
             background: #a07cff;
             border: none;
             border-radius: 60px;
@@ -162,7 +114,7 @@
             box-shadow: 0 0 20px #7a4cff55;
             margin-right: 15px;
         }
-        .btn-buy:hover, .btn-confirm:hover, .btn-give:hover { background: #bea5ff; box-shadow: 0 0 40px #7a4cffaa; transform: scale(1.02); }
+        .btn-buy:hover, .btn-confirm:hover { background: #bea5ff; box-shadow: 0 0 40px #7a4cffaa; transform: scale(1.02); }
         .btn-remove {
             background: #4a2a4a;
             color: #d9d0f0;
@@ -175,62 +127,36 @@
         .btn-danger { background: #4a2a4a; color: #d9d0f0; }
         .btn-danger:hover { background: #6a3a5a; }
         .empty-cart { color: #7a6a9a; font-style: italic; }
-        .order-code { background: #0b081a; padding: 15px 25px; border-radius: 60px; border: 1px solid #6b47d9; font-size: 1.8rem; font-weight: 700; letter-spacing: 3px; color: #b79aff; display: inline-block; margin: 10px 0 20px; }
-        .order-info { background: #18122b; border-radius: 16px; padding: 15px 20px; margin: 15px 0; border-left: 4px solid #9b7bff; }
-        .order-info p { margin: 6px 0; color: #c6b5ff; }
-        .order-info span { color: #e5daff; font-weight: 600; }
+        .check-block {
+            background: #18122b;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 1px solid #5b3f8a;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            align-items: center;
+        }
+        .check-block .qr { width: 150px; height: 150px; background: white; padding: 10px; border-radius: 16px; }
+        .check-block .qr canvas { width: 100% !important; height: 100% !important; }
+        .check-block .info { flex: 1; }
+        .check-block .info p { margin: 8px 0; color: #c6b5ff; }
+        .check-block .info span { color: #e5daff; font-weight: 600; }
+        .check-block .info .code { font-size: 1.8rem; font-weight: 700; color: #b79aff; letter-spacing: 2px; }
         .flex-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .hidden { display: none; }
-        .nick-input, .auth-input, .give-input {
-            background: #0b081a;
-            border: 1px solid #3b2b5a;
-            color: #d9d0f0;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-size: 1rem;
-            outline: none;
-        }
-        .nick-input { width: 200px; }
-        .auth-input, .give-input { width: 140px; }
-        .nick-input:focus, .auth-input:focus, .give-input:focus { border-color: #9b7bff; }
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-box {
-            background: #130f21;
-            padding: 30px 35px;
-            border-radius: 28px;
-            border: 1px solid #5b3f8a;
-            max-width: 400px;
-            width: 90%;
-        }
-        .modal-box h3 { color: #d4c5ff; margin-bottom: 20px; }
-        .modal-box .flex-row { gap: 10px; flex-direction: column; align-items: stretch; }
-        .modal-box .btn-confirm { padding: 10px 25px; font-size: 1rem; width: 100%; margin-right: 0; }
-        .modal-close {
-            float: right;
-            background: none;
-            border: none;
-            color: #7a6a9a;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        .modal-close:hover { color: #fff; }
-        .auth-msg { color: #7a6a9a; font-size: 0.9rem; margin-top: 8px; text-align: center; }
+        .nick-input { background: #0b081a; border: 1px solid #3b2b5a; color: #d9d0f0; padding: 12px 20px; border-radius: 40px; font-size: 1rem; outline: none; width: 200px; }
+        .nick-input:focus { border-color: #9b7bff; }
+        .admin-password-input { background: #0b081a; border: 1px solid #3b2b5a; color: #d9d0f0; padding: 12px 20px; border-radius: 40px; font-size: 1rem; outline: none; width: 160px; }
+        .admin-password-input:focus { border-color: #9b7bff; }
         @media (max-width: 600px) {
             .header { flex-direction: column; align-items: flex-start; }
-            .header .currency { margin-left: 0; flex-wrap: wrap; }
-            .header .auth-area { width: 100%; justify-content: space-between; }
+            .header .currency { margin-left: 0; }
             .services-grid { grid-template-columns: 1fr; }
             .flex-row { flex-direction: column; align-items: stretch; }
-            .nick-input, .auth-input, .give-input { width: 100%; }
+            .nick-input, .admin-password-input { width: 100%; }
+            .check-block { flex-direction: column; align-items: center; text-align: center; }
         }
     </style>
 </head>
@@ -257,18 +183,7 @@
             </svg>
         </div>
         <h1>VOID · RichClan</h1>
-        <span class="currency">
-            💎 VC
-            <span class="balance-box" id="header-balance">0</span>
-        </span>
-
-        <div class="auth-area" id="auth-area">
-            <span class="user-label">👤</span>
-            <span class="user-name" id="user-display">Гость</span>
-            <button class="auth-btn" id="login-btn">Вход</button>
-            <button class="auth-btn green" id="register-btn-header">Регистрация</button>
-            <button class="logout-btn hidden" id="logout-btn">Выйти</button>
-        </div>
+        <span class="currency">💎 VC</span>
     </header>
 
     <!-- ===== УСЛУГИ ===== -->
@@ -286,85 +201,36 @@
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
+    <!-- ===== ЧЕК (ПОЯВЛЯЕТСЯ ПОСЛЕ ЗАКАЗА) ===== -->
+    <section class="check-section hidden" id="check-section">
+        <h2>🧾 Ваш чек</h2>
+        <div id="check-content"></div>
+    </section>
+
     <!-- ===== АДМИН-ПАНЕЛЬ ===== -->
-    <section class="admin-section hidden" id="admin-panel">
+    <section class="admin-section" id="admin-panel">
         <h2>🔐 Админ-панель</h2>
-        <div id="admin-content"></div>
+        <div class="flex-row" style="margin-bottom:15px;">
+            <input type="password" id="admin-password" class="admin-password-input" placeholder="Пароль">
+            <button class="btn-confirm" id="admin-login-btn" style="padding:10px 25px; font-size:1rem;">Войти</button>
+            <button class="btn-danger" id="admin-logout-btn" style="padding:10px 25px; font-size:1rem; display:none;">Выйти</button>
+        </div>
+        <div id="admin-content">
+            <p style="color:#7a6a9a;">Войдите, чтобы управлять заказами.</p>
+        </div>
     </section>
 
 </div>
 
-<!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
-<div class="modal-overlay" id="auth-modal">
-    <div class="modal-box">
-        <button class="modal-close" id="modal-close">✕</button>
-        <h3 id="modal-title">Вход</h3>
-        <div id="modal-body"></div>
-        <div id="modal-msg" class="auth-msg"></div>
-    </div>
-</div>
-
-<script type="module">
+<script>
     // ============================================================
-    // ========== FIREBASE (ТОЛЬКО АУТЕНТИФИКАЦИЯ) ==========
+    // ========== ДАННЫЕ ==========
     // ============================================================
-    import { initializeApp } from 'firebase/app';
-    import {
-        getAuth,
-        createUserWithEmailAndPassword,
-        signInWithEmailAndPassword,
-        onAuthStateChanged,
-        signOut
-    } from 'firebase/auth';
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
-        authDomain: "void-e6363.firebaseapp.com",
-        projectId: "void-e6363",
-        storageBucket: "void-e6363.firebasestorage.app",
-        messagingSenderId: "123260153615",
-        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    // ============================================================
-    // ========== ДАННЫЕ (LOCALSTORAGE) ==========
-    // ============================================================
+    const ADMIN_PASSWORD = 'void2026'; // <- пароль админа
+    let isAdmin = false;
     let cart = [];
     let servicesData = [];
-    let activeOrder = null;
-    let currentUser = null;
-    let currentUserNick = null;
-
-    // Балансы и заказы хранятся в localStorage
-    function getBalances() {
-        return JSON.parse(localStorage.getItem('void_balances')) || {};
-    }
-
-    function saveBalances(balances) {
-        localStorage.setItem('void_balances', JSON.stringify(balances));
-    }
-
-    function getBalance(nick) {
-        const balances = getBalances();
-        return balances[nick] || 0;
-    }
-
-    function setBalance(nick, amount) {
-        const balances = getBalances();
-        balances[nick] = Math.max(0, amount);
-        saveBalances(balances);
-        if (currentUserNick === nick) {
-            document.getElementById('header-balance').textContent = amount;
-        }
-    }
-
-    function addBalance(nick, amount) {
-        const current = getBalance(nick);
-        setBalance(nick, current + amount);
-    }
+    let currentOrder = null; // последний созданный чек
 
     // ============================================================
     // ========== ЗАГРУЗКА УСЛУГ ==========
@@ -394,23 +260,23 @@
                 <h3>${service.name}</h3>
                 <p>${service.description}</p>
                 <span class="price">${service.price} VC</span>
-                <button onclick="window.addToCart(${service.id})">В корзину</button>
+                <button onclick="addToCart(${service.id})">В корзину</button>
             `;
             container.appendChild(card);
         });
     }
 
-    window.addToCart = function(id) {
+    function addToCart(id) {
         const service = servicesData.find(s => s.id === id);
         if (!service) return;
         cart.push(service);
         updateCart();
-    };
+    }
 
-    window.removeFromCart = function(index) {
+    function removeFromCart(index) {
         cart.splice(index, 1);
         updateCart();
-    };
+    }
 
     function updateCart() {
         const list = document.getElementById('cart-items');
@@ -428,7 +294,7 @@
                 <div class="cart-item-info">
                     <span class="item-name">${item.name}</span>
                     <span>${item.price} VC</span>
-                    <button class="btn-remove" onclick="window.removeFromCart(${index})">✕</button>
+                    <button class="btn-remove" onclick="removeFromCart(${index})">✕</button>
                 </div>
             `;
             list.appendChild(li);
@@ -438,7 +304,7 @@
     }
 
     // ============================================================
-    // ========== ГЕНЕРАЦИЯ КОДА ==========
+    // ========== ГЕНЕРАЦИЯ ЧЕКА ==========
     // ============================================================
     function generateOrderCode() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -449,10 +315,75 @@
         return code;
     }
 
+    function generateQR(text) {
+        const container = document.createElement('div');
+        container.className = 'qr';
+        new QRCode(container, {
+            text: text,
+            width: 150,
+            height: 150,
+            colorDark: '#0b081a',
+            colorLight: '#ffffff'
+        });
+        return container.innerHTML;
+    }
+
+    function createCheck(nick, items, total, code) {
+        const timestamp = new Date().toLocaleString();
+        const orderData = {
+            code,
+            nick,
+            items,
+            total,
+            timestamp,
+            confirmed: false
+        };
+
+        // Сохраняем в localStorage для админа
+        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+        orders.push(orderData);
+        localStorage.setItem('void_orders', JSON.stringify(orders));
+
+        // Формируем чек
+        const qrText = `ЧЕК №${code}\nНик: ${nick}\nСумма: ${total} VC\nДата: ${timestamp}\nСтатус: Ожидает подтверждения`;
+
+        const itemsHtml = items.map(item => `<li><span>${item.name}</span><span>${item.price} VC</span></li>`).join('');
+
+        document.getElementById('check-content').innerHTML = `
+            <div class="check-block">
+                <div class="qr" id="qr-container"></div>
+                <div class="info">
+                    <p><span class="code">ЧЕК №${code}</span></p>
+                    <p><span>Игрок:</span> ${nick}</p>
+                    <p><span>Сумма:</span> ${total} VC</p>
+                    <p><span>Дата:</span> ${timestamp}</p>
+                    <p><span>Услуги:</span></p>
+                    <ul>${itemsHtml}</ul>
+                    <p style="color:#7a6a9a; margin-top:10px;">⏳ Статус: <span style="color:#ffb347;">Ожидает подтверждения</span></p>
+                </div>
+            </div>
+        `;
+
+        // Рендерим QR через библиотеку
+        const qrContainer = document.getElementById('qr-container');
+        new QRCode(qrContainer, {
+            text: qrText,
+            width: 150,
+            height: 150,
+            colorDark: '#0b081a',
+            colorLight: '#ffffff'
+        });
+
+        document.getElementById('check-section').classList.remove('hidden');
+
+        currentOrder = orderData;
+        renderAdminOrders();
+    }
+
     // ============================================================
     // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
     // ============================================================
-    document.getElementById('buy-btn').addEventListener('click', async () => {
+    document.getElementById('buy-btn').addEventListener('click', () => {
         const nickInput = document.getElementById('player-nick');
         const nick = nickInput.value.trim();
 
@@ -465,291 +396,117 @@
             alert('Корзина пуста!');
             return;
         }
-        if (activeOrder && !activeOrder.confirmed) {
-            if (!confirm('Заменить активный заказ новым?')) return;
-        }
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
-        const balance = getBalance(nick);
-        if (balance < total) {
-            alert(`❌ Недостаточно VC. Баланс: ${balance} VC`);
-            return;
-        }
-
         const code = generateOrderCode();
-        addBalance(nick, -total);
-
         const items = cart.map(item => ({ name: item.name, price: item.price }));
-        activeOrder = { code, nick, items, total, timestamp: new Date().toLocaleString(), confirmed: false };
 
-        // Сохраняем заказ в localStorage
-        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-        orders.push({
-            code,
-            nick,
-            items,
-            total,
-            timestamp: new Date().toISOString(),
-            confirmed: false
-        });
-        localStorage.setItem('void_orders', JSON.stringify(orders));
+        createCheck(nick, items, total, code);
 
         cart = [];
         updateCart();
         nickInput.value = '';
-        if (currentUserNick === nick) {
-            document.getElementById('header-balance').textContent = getBalance(nick);
-        }
-        alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC`);
-        renderAdminPanel();
     });
 
     // ============================================================
-    // ========== АВТОРИЗАЦИЯ ==========
+    // ========== АДМИН-ПАНЕЛЬ ==========
     // ============================================================
-    const modal = document.getElementById('auth-modal');
-    const modalBody = document.getElementById('modal-body');
-    const modalTitle = document.getElementById('modal-title');
-    const modalMsg = document.getElementById('modal-msg');
-
-    function openModal(title, html) {
-        modalTitle.textContent = title;
-        modalBody.innerHTML = html;
-        modalMsg.textContent = '';
-        modal.classList.add('active');
-    }
-
-    document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('active'));
-    window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
-
-    // ---- Регистрация ----
-    document.getElementById('register-btn-header').addEventListener('click', () => {
-        openModal('Регистрация', `
-            <div class="flex-row">
-                <input type="email" id="reg-email" class="auth-input" placeholder="Email" style="width:100%;">
-                <input type="password" id="reg-password" class="auth-input" placeholder="Пароль" style="width:100%;">
-                <input type="text" id="reg-nick" class="auth-input" placeholder="Ваш игровой ник" style="width:100%;">
-                <button class="btn-confirm" id="modal-register-btn" style="width:100%;">Создать аккаунт</button>
-            </div>
-        `);
-        document.getElementById('modal-register-btn').addEventListener('click', async () => {
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value.trim();
-            const nick = document.getElementById('reg-nick').value.trim();
-
-            if (!email || !password || !nick) {
-                modalMsg.textContent = '❌ Заполните все поля';
-                modalMsg.style.color = '#ff6b6b';
-                return;
-            }
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                // Сохраняем ник в localStorage
-                const users = JSON.parse(localStorage.getItem('void_users')) || {};
-                users[email] = { nick, balance: 0 };
-                localStorage.setItem('void_users', JSON.stringify(users));
-                modalMsg.textContent = '✅ Аккаунт создан! Вход выполняется...';
-                modalMsg.style.color = '#b79aff';
-            } catch (error) {
-                let msg = '❌ Ошибка регистрации.';
-                if (error.code === 'auth/email-already-in-use') msg = '❌ Этот email уже используется.';
-                else if (error.code === 'auth/weak-password') msg = '❌ Слишком слабый пароль.';
-                else if (error.code === 'auth/invalid-email') msg = '❌ Некорректный email.';
-                modalMsg.textContent = msg;
-                modalMsg.style.color = '#ff6b6b';
-                console.error(error);
-            }
-        });
-    });
-
-    // ---- Вход ----
-    document.getElementById('login-btn').addEventListener('click', () => {
-        openModal('Вход', `
-            <div class="flex-row">
-                <input type="email" id="login-email" class="auth-input" placeholder="Email" style="width:100%;">
-                <input type="password" id="login-password" class="auth-input" placeholder="Пароль" style="width:100%;">
-                <button class="btn-confirm" id="modal-login-btn" style="width:100%;">Войти</button>
-            </div>
-        `);
-        document.getElementById('modal-login-btn').addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-
-            if (!email || !password) {
-                modalMsg.textContent = '❌ Заполните оба поля';
-                modalMsg.style.color = '#ff6b6b';
-                return;
-            }
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                modalMsg.textContent = '✅ Вход выполнен';
-                modalMsg.style.color = '#b79aff';
-            } catch (error) {
-                let msg = '❌ Неверный email или пароль.';
-                if (error.code === 'auth/user-not-found') msg = '❌ Пользователь не найден.';
-                else if (error.code === 'auth/wrong-password') msg = '❌ Неверный пароль.';
-                modalMsg.textContent = msg;
-                modalMsg.style.color = '#ff6b6b';
-                console.error(error);
-            }
-        });
-    });
-
-    // ---- Выход ----
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await signOut(auth);
-    });
-
-    // ============================================================
-    // ========== СОСТОЯНИЕ АУТЕНТИФИКАЦИИ ==========
-    // ============================================================
-    const adminEmails = ['admin@void.com', 'fox@void.com'];
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            const users = JSON.parse(localStorage.getItem('void_users')) || {};
-            if (users[user.email]) {
-                currentUserNick = users[user.email].nick;
-                document.getElementById('header-balance').textContent = getBalance(currentUserNick);
-            } else {
-                currentUserNick = null;
-                document.getElementById('header-balance').textContent = '0';
-            }
-            updateAuthUI(true, user.email);
-            renderAdminPanel();
-            modal.classList.remove('active');
-        } else {
-            currentUser = null;
-            currentUserNick = null;
-            document.getElementById('header-balance').textContent = '0';
-            updateAuthUI(false);
-            document.getElementById('admin-panel').classList.add('hidden');
-        }
-    });
-
-    function updateAuthUI(isLoggedIn, email = '') {
-        const display = document.getElementById('user-display');
-        const loginBtn = document.getElementById('login-btn');
-        const registerBtn = document.getElementById('register-btn-header');
-        const logoutBtn = document.getElementById('logout-btn');
-
-        if (isLoggedIn) {
-            display.textContent = email || 'Пользователь';
-            loginBtn.classList.add('hidden');
-            registerBtn.classList.add('hidden');
-            logoutBtn.classList.remove('hidden');
-        } else {
-            display.textContent = 'Гость';
-            loginBtn.classList.remove('hidden');
-            registerBtn.classList.remove('hidden');
-            logoutBtn.classList.add('hidden');
-        }
-    }
-
-    // ============================================================
-    // ========== АДМИН-ПАНЕЛЬ (ИЗ LOCALSTORAGE) ==========
-    // ============================================================
-    function renderAdminPanel() {
-        const panel = document.getElementById('admin-panel');
+    function renderAdminOrders() {
         const content = document.getElementById('admin-content');
-
-        if (!currentUser) {
-            panel.classList.add('hidden');
+        if (!isAdmin) {
+            content.innerHTML = '<p style="color:#7a6a9a;">Войдите, чтобы управлять заказами.</p>';
             return;
         }
-
-        if (!adminEmails.includes(currentUser.email)) {
-            panel.classList.add('hidden');
-            return;
-        }
-
-        panel.classList.remove('hidden');
 
         const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
         const activeOrders = orders.filter(o => !o.confirmed);
 
-        let ordersHtml = '';
-        if (activeOrders.length > 0) {
-            const order = activeOrders[0];
-            const itemsList = order.items.map(item =>
-                `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-            ).join('');
-            ordersHtml = `
-                <div class="order-info">
-                    <p><span>Код:</span> <span class="order-code">${order.code}</span></p>
-                    <p><span>Игрок:</span> ${order.nick}</p>
-                    <p><span>Время:</span> ${new Date(order.timestamp).toLocaleString()}</p>
-                    <p><span>Сумма:</span> ${order.total} VC</p>
-                    <p><span>Услуги:</span></p>
-                    <ul>${itemsList}</ul>
-                </div>
-                <div class="flex-row">
-                    <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
-                    <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
-                </div>
-            `;
-        } else {
-            ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
+        if (activeOrders.length === 0) {
+            content.innerHTML = '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
+            return;
         }
 
-        content.innerHTML = `
-            ${ordersHtml}
-            <hr style="border-color:#26203b; margin:25px 0;">
-            <div style="margin-top:15px;">
-                <h3 style="color:#c6b5ff; margin-bottom:12px;">💎 Выдать VC</h3>
-                <div class="flex-row">
-                    <input type="text" id="give-nick" class="give-input" placeholder="Ник игрока">
-                    <input type="number" id="give-amount" class="give-input" placeholder="Сумма" min="1">
-                    <button class="btn-give" id="give-btn">Выдать</button>
+        let html = '';
+        activeOrders.forEach((order, idx) => {
+            const itemsHtml = order.items.map(item =>
+                `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+            ).join('');
+            html += `
+                <div class="order-info" style="background:#18122b; border-radius:16px; padding:15px 20px; margin:15px 0; border-left:4px solid #9b7bff;">
+                    <p><span>Код:</span> <span class="order-code" style="background:#0b081a; padding:5px 15px; border-radius:40px; border:1px solid #6b47d9; font-size:1.4rem; font-weight:700; letter-spacing:2px; color:#b79aff; display:inline-block;">${order.code}</span></p>
+                    <p><span>Игрок:</span> ${order.nick}</p>
+                    <p><span>Время:</span> ${order.timestamp}</p>
+                    <p><span>Сумма:</span> ${order.total} VC</p>
+                    <p><span>Услуги:</span></p>
+                    <ul>${itemsHtml}</ul>
+                    <div class="flex-row" style="margin-top:15px;">
+                        <button class="btn-confirm" onclick="confirmOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">✅ Подтвердить</button>
+                        <button class="btn-confirm btn-danger" onclick="cancelOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">❌ Отменить</button>
+                    </div>
                 </div>
-                <div id="give-msg" class="auth-msg"></div>
-            </div>
-        `;
-
-        document.getElementById('confirm-order-btn')?.addEventListener('click', () => {
-            const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-            const idx = orders.findIndex(o => o.code === activeOrders[0].code && !o.confirmed);
-            if (idx !== -1) {
-                orders[idx].confirmed = true;
-                localStorage.setItem('void_orders', JSON.stringify(orders));
-                alert('✅ Заказ подтверждён!');
-                renderAdminPanel();
-            }
+            `;
         });
 
-        document.getElementById('cancel-order-btn')?.addEventListener('click', () => {
-            const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-            const idx = orders.findIndex(o => o.code === activeOrders[0].code && !o.confirmed);
-            if (idx !== -1) {
-                addBalance(activeOrders[0].nick, activeOrders[0].total);
-                orders[idx].confirmed = true;
-                localStorage.setItem('void_orders', JSON.stringify(orders));
-                alert('❌ Заказ отменён, средства возвращены.');
-                renderAdminPanel();
-            }
-        });
-
-        document.getElementById('give-btn')?.addEventListener('click', () => {
-            const nick = document.getElementById('give-nick').value.trim();
-            const amount = parseInt(document.getElementById('give-amount').value.trim());
-            const msg = document.getElementById('give-msg');
-            if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
-            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
-            addBalance(nick, amount);
-            msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
-            msg.style.color = '#b79aff';
-            document.getElementById('give-nick').value = '';
-            document.getElementById('give-amount').value = '';
-        });
+        content.innerHTML = html;
     }
+
+    window.confirmOrder = function(code) {
+        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+        const idx = orders.findIndex(o => o.code === code && !o.confirmed);
+        if (idx !== -1) {
+            orders[idx].confirmed = true;
+            localStorage.setItem('void_orders', JSON.stringify(orders));
+            alert(`✅ Чек №${code} подтверждён!`);
+            renderAdminOrders();
+            if (currentOrder && currentOrder.code === code) {
+                currentOrder.confirmed = true;
+                document.getElementById('check-content').querySelector('.check-block').innerHTML +=
+                    `<p style="color:#6fcf97; margin-top:10px;">✅ Статус: Подтверждён</p>`;
+            }
+        }
+    };
+
+    window.cancelOrder = function(code) {
+        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+        const idx = orders.findIndex(o => o.code === code && !o.confirmed);
+        if (idx !== -1) {
+            orders[idx].confirmed = true; // помечаем как обработанный (отмена)
+            localStorage.setItem('void_orders', JSON.stringify(orders));
+            alert(`❌ Чек №${code} отменён.`);
+            renderAdminOrders();
+            if (currentOrder && currentOrder.code === code) {
+                currentOrder.confirmed = true;
+                document.getElementById('check-content').querySelector('.check-block').innerHTML +=
+                    `<p style="color:#ff6b6b; margin-top:10px;">❌ Статус: Отменён</p>`;
+            }
+        }
+    };
+
+    // ---- Вход/Выход админа ----
+    document.getElementById('admin-login-btn').addEventListener('click', () => {
+        const pass = document.getElementById('admin-password').value.trim();
+        if (pass === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('admin-login-btn').style.display = 'none';
+            document.getElementById('admin-logout-btn').style.display = 'inline-block';
+            renderAdminOrders();
+        } else {
+            alert('❌ Неверный пароль!');
+        }
+    });
+
+    document.getElementById('admin-logout-btn').addEventListener('click', () => {
+        isAdmin = false;
+        document.getElementById('admin-login-btn').style.display = 'inline-block';
+        document.getElementById('admin-logout-btn').style.display = 'none';
+        document.getElementById('admin-content').innerHTML = '<p style="color:#7a6a9a;">Войдите, чтобы управлять заказами.</p>';
+    });
 
     // ============================================================
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
     // ============================================================
     updateCart();
+    renderAdminOrders();
 </script>
 </body>
 </html>
