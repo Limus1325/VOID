@@ -17,6 +17,8 @@
             align-items: center;
         }
         .container { max-width: 1200px; width: 100%; }
+
+        /* ===== ШАПКА ===== */
         .header {
             display: flex;
             align-items: center;
@@ -26,17 +28,8 @@
             margin-bottom: 30px;
             flex-wrap: wrap;
         }
-        .logo-svg {
-            width: 80px;
-            height: 80px;
-            flex-shrink: 0;
-        }
-        .logo-svg svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-            filter: drop-shadow(0 0 15px #7a4cff66);
-        }
+        .logo-svg { width: 70px; height: 70px; flex-shrink: 0; }
+        .logo-svg svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 15px #7a4cff66); }
         .header h1 {
             font-size: 2.2rem;
             font-weight: 700;
@@ -54,6 +47,17 @@
             font-weight: 600;
             font-size: 1.1rem;
             color: #c6b5ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header .currency .balance-box {
+            background: #0f0c1e;
+            padding: 4px 12px;
+            border-radius: 30px;
+            border: 1px solid #5b3f8a;
+            font-size: 1rem;
+            color: #e5daff;
         }
         .header .auth-area {
             display: flex;
@@ -87,6 +91,8 @@
             color: #8bffb0;
         }
         .header .auth-btn.green:hover { background: #2a4a3a; }
+
+        /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -125,20 +131,13 @@
             letter-spacing: 0.5px;
         }
         .service-card button:hover { background: #8b6aff; box-shadow: 0 0 20px #6b47d966; }
-        .cart-section, .admin-section, .balance-section {
+        .cart-section, .admin-section {
             background: #130f21;
             border-radius: 28px;
             padding: 28px 30px;
             border: 1px solid #32284a;
             margin-top: 20px;
         }
-        .balance-section {
-            background: #0f0c1e;
-            border-color: #3b2b5a;
-            text-align: center;
-        }
-        .balance-section h2 { font-size: 1.4rem; color: #b79aff; }
-        .balance-section .amount { font-size: 2.8rem; font-weight: 700; color: #e5daff; margin: 10px 0; }
         .cart-section h2, .admin-section h2 { font-size: 1.8rem; margin-bottom: 16px; color: #d4c5ff; display: flex; align-items: center; gap: 12px; }
         .cart-section ul, .admin-section ul { list-style: none; padding: 0; margin: 0 0 20px 0; }
         .cart-section li, .admin-section li { padding: 8px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; font-size: 1rem; }
@@ -178,24 +177,17 @@
         .nick-input { width: 200px; }
         .auth-input, .give-input { width: 140px; }
         .nick-input:focus, .auth-input:focus, .give-input:focus { border-color: #9b7bff; }
-        .auth-box, .give-box {
-            background: #18122b;
-            padding: 20px 25px;
-            border-radius: 20px;
-            border: 1px solid #32284a;
-            margin: 15px 0;
-            max-width: 100%;
-        }
-        .auth-msg, .give-msg { color: #7a6a9a; font-size: 0.9rem; margin-top: 8px; }
+
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7);
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
+        .modal-overlay.active { display: flex; }
         .modal-box {
             background: #130f21;
             padding: 30px 35px;
@@ -205,8 +197,8 @@
             width: 90%;
         }
         .modal-box h3 { color: #d4c5ff; margin-bottom: 20px; }
-        .modal-box .flex-row { gap: 10px; }
-        .modal-box .btn-confirm { padding: 10px 25px; font-size: 1rem; }
+        .modal-box .flex-row { gap: 10px; flex-direction: column; align-items: stretch; }
+        .modal-box .btn-confirm { padding: 10px 25px; font-size: 1rem; width: 100%; margin-right: 0; }
         .modal-close {
             float: right;
             background: none;
@@ -216,9 +208,11 @@
             cursor: pointer;
         }
         .modal-close:hover { color: #fff; }
+        .auth-msg { color: #7a6a9a; font-size: 0.9rem; margin-top: 8px; text-align: center; }
+
         @media (max-width: 600px) {
             .header { flex-direction: column; align-items: flex-start; }
-            .header .currency { margin-left: 0; }
+            .header .currency { margin-left: 0; flex-wrap: wrap; }
             .header .auth-area { width: 100%; justify-content: space-between; }
             .services-grid { grid-template-columns: 1fr; }
             .flex-row { flex-direction: column; align-items: stretch; }
@@ -229,7 +223,7 @@
 <body>
 <div class="container">
 
-    <!-- ========== ШАПКА ========== -->
+    <!-- ===== ШАПКА ===== -->
     <header class="header">
         <div class="logo-svg">
             <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -249,7 +243,10 @@
             </svg>
         </div>
         <h1>VOID · RichClan</h1>
-        <span class="currency">💎 VC</span>
+        <span class="currency">
+            💎 VC
+            <span class="balance-box" id="header-balance">0</span>
+        </span>
 
         <div class="auth-area" id="auth-area">
             <span class="user-label">👤</span>
@@ -260,21 +257,10 @@
         </div>
     </header>
 
-    <!-- ========== БАЛАНС ========== -->
-    <section class="balance-section">
-        <h2>💰 Ваш баланс</h2>
-        <div class="amount" id="user-balance">0</div>
-        <span style="color:#7a6a9a; font-size:0.9rem;">VC</span>
-        <div style="margin-top:8px;">
-            <input type="text" id="balance-nick" class="nick-input" placeholder="Ваш игровой ник" style="width:200px;">
-            <button class="btn-confirm" id="check-balance-btn" style="padding:10px 25px; font-size:1rem;">Показать</button>
-        </div>
-    </section>
-
-    <!-- ========== УСЛУГИ ========== -->
+    <!-- ===== УСЛУГИ ===== -->
     <div id="services-list" class="services-grid"></div>
 
-    <!-- ========== КОРЗИНА ========== -->
+    <!-- ===== КОРЗИНА ===== -->
     <section class="cart-section">
         <h2>🛒 Корзина</h2>
         <div class="flex-row" style="margin-bottom: 20px;">
@@ -286,18 +272,16 @@
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
-    <!-- ========== АДМИН-ПАНЕЛЬ ========== -->
+    <!-- ===== АДМИН-ПАНЕЛЬ ===== -->
     <section class="admin-section hidden" id="admin-panel">
         <h2>🔐 Админ-панель</h2>
-        <div id="admin-content">
-            <!-- подставляется -->
-        </div>
+        <div id="admin-content"></div>
     </section>
 
 </div>
 
-<!-- ========== МОДАЛЬНЫЕ ОКНА ========== -->
-<div id="auth-modal" class="modal-overlay hidden">
+<!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
+<div class="modal-overlay" id="auth-modal">
     <div class="modal-box">
         <button class="modal-close" id="modal-close">✕</button>
         <h3 id="modal-title">Вход</h3>
@@ -322,6 +306,25 @@
     };
 
     // ============================================================
+    // ========== ФУНКЦИИ БАЛАНСА ==========
+    // ============================================================
+    function getBalance(nick) { return balances[nick] || 0; }
+    function setBalance(nick, amount) {
+        balances[nick] = Math.max(0, amount);
+        localStorage.setItem('void_balances', JSON.stringify(balances));
+        updateHeaderBalance(nick);
+    }
+    function addBalance(nick, amount) {
+        const current = getBalance(nick);
+        setBalance(nick, current + amount);
+    }
+
+    function updateHeaderBalance(nick) {
+        const bal = getBalance(nick);
+        document.getElementById('header-balance').textContent = bal;
+    }
+
+    // ============================================================
     // ========== ЗАГРУЗКА УСЛУГ ==========
     // ============================================================
     fetch('services.json')
@@ -335,7 +338,7 @@
         })
         .catch(err => {
             document.getElementById('services-list').innerHTML =
-                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги. Проверьте файл services.json</p>`;
+                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги.</p>`;
             console.error(err);
         });
 
@@ -385,29 +388,6 @@
     }
 
     // ============================================================
-    // ========== БАЛАНС ==========
-    // ============================================================
-    function getBalance(nick) { return balances[nick] || 0; }
-    function setBalance(nick, amount) {
-        balances[nick] = Math.max(0, amount);
-        localStorage.setItem('void_balances', JSON.stringify(balances));
-    }
-    function addBalance(nick, amount) {
-        const current = getBalance(nick);
-        setBalance(nick, current + amount);
-    }
-
-    document.getElementById('check-balance-btn').addEventListener('click', () => {
-        const nick = document.getElementById('balance-nick').value.trim();
-        if (!nick) {
-            alert('Введите ник');
-            return;
-        }
-        const balance = getBalance(nick);
-        document.getElementById('user-balance').textContent = balance;
-    });
-
-    // ============================================================
     // ========== ГЕНЕРАЦИЯ КОДА ==========
     // ============================================================
     function generateOrderCode() {
@@ -441,7 +421,7 @@
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
         if (getBalance(nick) < total) {
-            alert(`❌ Недостаточно VC. Ваш баланс: ${getBalance(nick)} VC`);
+            alert(`❌ Недостаточно VC. Баланс: ${getBalance(nick)} VC`);
             return;
         }
 
@@ -454,16 +434,14 @@
         cart = [];
         updateCart();
         nickInput.value = '';
+        updateHeaderBalance(nick);
 
         alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC`);
-
-        // Обновляем баланс на экране
-        document.getElementById('user-balance').textContent = getBalance(nick);
         renderAdminPanel();
     });
 
     // ============================================================
-    // ========== АВТОРИЗАЦИЯ ==========
+    // ========== МОДАЛЬНЫЕ ОКНА (ВХОД/РЕГИСТРАЦИЯ) ==========
     // ============================================================
     const modal = document.getElementById('auth-modal');
     const modalBody = document.getElementById('modal-body');
@@ -474,18 +452,23 @@
         modalTitle.textContent = title;
         modalBody.innerHTML = html;
         modalMsg.textContent = '';
-        modal.classList.remove('hidden');
+        modal.classList.add('active');
     }
 
-    document.getElementById('modal-close').addEventListener('click', () => modal.classList.add('hidden'));
-    window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+    document.getElementById('modal-close').addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+    });
 
+    // ---- Регистрация ----
     document.getElementById('register-btn-header').addEventListener('click', () => {
         openModal('Регистрация', `
-            <div class="flex-row" style="flex-direction:column; align-items:stretch;">
+            <div class="flex-row">
                 <input type="text" id="reg-login" class="auth-input" placeholder="Новый логин" style="width:100%;">
                 <input type="password" id="reg-password" class="auth-input" placeholder="Пароль" style="width:100%;">
-                <button class="btn-confirm" id="modal-register-btn" style="width:100%;">Создать</button>
+                <button class="btn-confirm" id="modal-register-btn" style="width:100%;">Создать аккаунт</button>
             </div>
         `);
         document.getElementById('modal-register-btn').addEventListener('click', () => {
@@ -502,15 +485,16 @@
                 return;
             }
             adminDB[login] = password;
-            modalMsg.textContent = '✅ Аккаунт создан! Войдите.';
+            modalMsg.textContent = '✅ Аккаунт создан! Теперь войдите.';
             modalMsg.style.color = '#b79aff';
-            setTimeout(() => modal.classList.add('hidden'), 1500);
+            setTimeout(() => modal.classList.remove('active'), 1200);
         });
     });
 
+    // ---- Вход ----
     document.getElementById('login-btn').addEventListener('click', () => {
         openModal('Вход', `
-            <div class="flex-row" style="flex-direction:column; align-items:stretch;">
+            <div class="flex-row">
                 <input type="text" id="login-login" class="auth-input" placeholder="Логин" style="width:100%;">
                 <input type="password" id="login-password" class="auth-input" placeholder="Пароль" style="width:100%;">
                 <button class="btn-confirm" id="modal-login-btn" style="width:100%;">Войти</button>
@@ -525,7 +509,7 @@
                 modalMsg.style.color = '#b79aff';
                 updateAuthUI();
                 renderAdminPanel();
-                setTimeout(() => modal.classList.add('hidden'), 1000);
+                setTimeout(() => modal.classList.remove('active'), 800);
             } else {
                 modalMsg.textContent = '❌ Неверный логин или пароль';
                 modalMsg.style.color = '#ff6b6b';
@@ -533,6 +517,7 @@
         });
     });
 
+    // ---- Выход ----
     document.getElementById('logout-btn').addEventListener('click', () => {
         adminSession = null;
         updateAuthUI();
@@ -597,14 +582,14 @@
         content.innerHTML = `
             ${ordersHtml}
             <hr style="border-color:#26203b; margin:25px 0;">
-            <div class="give-box">
+            <div style="margin-top:15px;">
                 <h3 style="color:#c6b5ff; margin-bottom:12px;">💎 Выдать VC</h3>
                 <div class="flex-row">
                     <input type="text" id="give-nick" class="give-input" placeholder="Ник игрока">
                     <input type="number" id="give-amount" class="give-input" placeholder="Сумма" min="1">
                     <button class="btn-give" id="give-btn">Выдать</button>
                 </div>
-                <div id="give-msg" class="give-msg"></div>
+                <div id="give-msg" class="auth-msg"></div>
             </div>
         `;
 
@@ -631,7 +616,7 @@
             const amount = parseInt(document.getElementById('give-amount').value.trim());
             const msg = document.getElementById('give-msg');
             if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
-            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма должна быть больше 0'; msg.style.color = '#ff6b6b'; return; }
+            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
             addBalance(nick, amount);
             msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
             msg.style.color = '#b79aff';
