@@ -50,6 +50,14 @@
             align-items: center;
             gap: 10px;
         }
+        .header .currency .balance-box {
+            background: #0f0c1e;
+            padding: 4px 12px;
+            border-radius: 30px;
+            border: 1px solid #5b3f8a;
+            font-size: 1rem;
+            color: #e5daff;
+        }
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -146,16 +154,24 @@
         .check-block .info .code { font-size: 1.8rem; font-weight: 700; color: #b79aff; letter-spacing: 2px; }
         .flex-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .hidden { display: none; }
-        .nick-input { background: #0b081a; border: 1px solid #3b2b5a; color: #d9d0f0; padding: 12px 20px; border-radius: 40px; font-size: 1rem; outline: none; width: 200px; }
-        .nick-input:focus { border-color: #9b7bff; }
-        .admin-password-input { background: #0b081a; border: 1px solid #3b2b5a; color: #d9d0f0; padding: 12px 20px; border-radius: 40px; font-size: 1rem; outline: none; width: 160px; }
-        .admin-password-input:focus { border-color: #9b7bff; }
+        .nick-input, .admin-password-input, .give-input {
+            background: #0b081a;
+            border: 1px solid #3b2b5a;
+            color: #d9d0f0;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .nick-input { width: 200px; }
+        .admin-password-input, .give-input { width: 160px; }
+        .nick-input:focus, .admin-password-input:focus, .give-input:focus { border-color: #9b7bff; }
         @media (max-width: 600px) {
             .header { flex-direction: column; align-items: flex-start; }
             .header .currency { margin-left: 0; }
             .services-grid { grid-template-columns: 1fr; }
             .flex-row { flex-direction: column; align-items: stretch; }
-            .nick-input, .admin-password-input { width: 100%; }
+            .nick-input, .admin-password-input, .give-input { width: 100%; }
             .check-block { flex-direction: column; align-items: center; text-align: center; }
         }
     </style>
@@ -183,7 +199,10 @@
             </svg>
         </div>
         <h1>VOID · RichClan</h1>
-        <span class="currency">💎 VC</span>
+        <span class="currency">
+            💎 VC
+            <span class="balance-box" id="header-balance">0</span>
+        </span>
     </header>
 
     <!-- ===== УСЛУГИ ===== -->
@@ -195,13 +214,14 @@
         <div class="flex-row" style="margin-bottom: 20px;">
             <input type="text" id="player-nick" class="nick-input" placeholder="Ваш игровой ник" required>
             <span style="color:#7a6a9a; font-size:0.9rem;">(обязательно для заказа)</span>
+            <button class="btn-confirm" id="check-balance-btn" style="padding:10px 25px; font-size:1rem; margin-right:0;">Проверить баланс</button>
         </div>
         <ul id="cart-items"><li class="empty-cart">Пока пусто</li></ul>
         <div class="cart-total">Итого: <span id="total-price">0</span> VC</div>
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
-    <!-- ===== ЧЕК (ПОЯВЛЯЕТСЯ ПОСЛЕ ЗАКАЗА) ===== -->
+    <!-- ===== ЧЕК ===== -->
     <section class="check-section hidden" id="check-section">
         <h2>🧾 Ваш чек</h2>
         <div id="check-content"></div>
@@ -216,7 +236,7 @@
             <button class="btn-danger" id="admin-logout-btn" style="padding:10px 25px; font-size:1rem; display:none;">Выйти</button>
         </div>
         <div id="admin-content">
-            <p style="color:#7a6a9a;">Войдите, чтобы управлять заказами.</p>
+            <p style="color:#7a6a9a;">Войдите, чтобы управлять заказами и балансами.</p>
         </div>
     </section>
 
@@ -226,11 +246,51 @@
     // ============================================================
     // ========== ДАННЫЕ ==========
     // ============================================================
-    const ADMIN_PASSWORD = 'void2026'; // <- пароль админа
+    const ADMIN_PASSWORD = 'void2026';
     let isAdmin = false;
     let cart = [];
     let servicesData = [];
-    let currentOrder = null; // последний созданный чек
+    let currentOrder = null;
+    let currentNick = '';
+
+    // ============================================================
+    // ========== КОШЕЛЁК (BALANCE) ==========
+    // ============================================================
+    function getBalances() {
+        return JSON.parse(localStorage.getItem('void_balances')) || {};
+    }
+
+    function saveBalances(balances) {
+        localStorage.setItem('void_balances', JSON.stringify(balances));
+    }
+
+    function getBalance(nick) {
+        const balances = getBalances();
+        return balances[nick] || 0;
+    }
+
+    function setBalance(nick, amount) {
+        const balances = getBalances();
+        balances[nick] = Math.max(0, amount);
+        saveBalances(balances);
+        if (nick === currentNick) {
+            updateHeaderBalance();
+        }
+    }
+
+    function addBalance(nick, amount) {
+        const current = getBalance(nick);
+        setBalance(nick, current + amount);
+    }
+
+    function updateHeaderBalance() {
+        const nick = document.getElementById('player-nick').value.trim();
+        if (nick) {
+            document.getElementById('header-balance').textContent = getBalance(nick);
+        } else {
+            document.getElementById('header-balance').textContent = '0';
+        }
+    }
 
     // ============================================================
     // ========== ЗАГРУЗКА УСЛУГ ==========
@@ -315,19 +375,6 @@
         return code;
     }
 
-    function generateQR(text) {
-        const container = document.createElement('div');
-        container.className = 'qr';
-        new QRCode(container, {
-            text: text,
-            width: 150,
-            height: 150,
-            colorDark: '#0b081a',
-            colorLight: '#ffffff'
-        });
-        return container.innerHTML;
-    }
-
     function createCheck(nick, items, total, code) {
         const timestamp = new Date().toLocaleString();
         const orderData = {
@@ -339,12 +386,10 @@
             confirmed: false
         };
 
-        // Сохраняем в localStorage для админа
         const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
         orders.push(orderData);
         localStorage.setItem('void_orders', JSON.stringify(orders));
 
-        // Формируем чек
         const qrText = `ЧЕК №${code}\nНик: ${nick}\nСумма: ${total} VC\nДата: ${timestamp}\nСтатус: Ожидает подтверждения`;
 
         const itemsHtml = items.map(item => `<li><span>${item.name}</span><span>${item.price} VC</span></li>`).join('');
@@ -364,7 +409,6 @@
             </div>
         `;
 
-        // Рендерим QR через библиотеку
         const qrContainer = document.getElementById('qr-container');
         new QRCode(qrContainer, {
             text: qrText,
@@ -375,7 +419,6 @@
         });
 
         document.getElementById('check-section').classList.remove('hidden');
-
         currentOrder = orderData;
         renderAdminOrders();
     }
@@ -398,6 +441,16 @@
         }
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
+        const balance = getBalance(nick);
+
+        if (balance < total) {
+            alert(`❌ Недостаточно VC. Ваш баланс: ${balance} VC, а сумма заказа: ${total} VC.`);
+            return;
+        }
+
+        // Списываем деньги
+        addBalance(nick, -total);
+
         const code = generateOrderCode();
         const items = cart.map(item => ({ name: item.name, price: item.price }));
 
@@ -406,6 +459,22 @@
         cart = [];
         updateCart();
         nickInput.value = '';
+        updateHeaderBalance();
+    });
+
+    // ============================================================
+    // ========== ПРОВЕРКА БАЛАНСА ==========
+    // ============================================================
+    document.getElementById('check-balance-btn').addEventListener('click', () => {
+        const nick = document.getElementById('player-nick').value.trim();
+        if (!nick) {
+            alert('Введите ник!');
+            return;
+        }
+        const balance = getBalance(nick);
+        alert(`💰 Баланс игрока ${nick}: ${balance} VC`);
+        document.getElementById('header-balance').textContent = balance;
+        currentNick = nick;
     });
 
     // ============================================================
@@ -414,40 +483,65 @@
     function renderAdminOrders() {
         const content = document.getElementById('admin-content');
         if (!isAdmin) {
-            content.innerHTML = '<p style="color:#7a6a9a;">Войдите, чтобы управлять заказами.</p>';
+            content.innerHTML = '<p style="color:#7a6a9a;">Войдите, чтобы управлять заказами и балансами.</p>';
             return;
         }
 
         const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
         const activeOrders = orders.filter(o => !o.confirmed);
 
+        let html = `
+            <div style="margin-bottom:25px; background:#18122b; border-radius:16px; padding:20px; border:1px solid #32284a;">
+                <h3 style="color:#c6b5ff; margin-bottom:12px;">💎 Выдать VC игроку</h3>
+                <div class="flex-row">
+                    <input type="text" id="give-nick" class="give-input" placeholder="Ник игрока">
+                    <input type="number" id="give-amount" class="give-input" placeholder="Сумма" min="1">
+                    <button class="btn-confirm" id="give-btn" style="padding:10px 25px; font-size:1rem;">Выдать</button>
+                </div>
+                <div id="give-msg" style="color:#7a6a9a; margin-top:8px;"></div>
+            </div>
+        `;
+
         if (activeOrders.length === 0) {
-            content.innerHTML = '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
-            return;
+            html += '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
+        } else {
+            activeOrders.forEach((order, idx) => {
+                const itemsHtml = order.items.map(item =>
+                    `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+                ).join('');
+                html += `
+                    <div class="order-info" style="background:#18122b; border-radius:16px; padding:15px 20px; margin:15px 0; border-left:4px solid #9b7bff;">
+                        <p><span>Код:</span> <span class="order-code" style="background:#0b081a; padding:5px 15px; border-radius:40px; border:1px solid #6b47d9; font-size:1.4rem; font-weight:700; letter-spacing:2px; color:#b79aff; display:inline-block;">${order.code}</span></p>
+                        <p><span>Игрок:</span> ${order.nick}</p>
+                        <p><span>Время:</span> ${order.timestamp}</p>
+                        <p><span>Сумма:</span> ${order.total} VC</p>
+                        <p><span>Услуги:</span></p>
+                        <ul>${itemsHtml}</ul>
+                        <div class="flex-row" style="margin-top:15px;">
+                            <button class="btn-confirm" onclick="confirmOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">✅ Подтвердить</button>
+                            <button class="btn-confirm btn-danger" onclick="cancelOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">❌ Отменить</button>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
-        let html = '';
-        activeOrders.forEach((order, idx) => {
-            const itemsHtml = order.items.map(item =>
-                `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-            ).join('');
-            html += `
-                <div class="order-info" style="background:#18122b; border-radius:16px; padding:15px 20px; margin:15px 0; border-left:4px solid #9b7bff;">
-                    <p><span>Код:</span> <span class="order-code" style="background:#0b081a; padding:5px 15px; border-radius:40px; border:1px solid #6b47d9; font-size:1.4rem; font-weight:700; letter-spacing:2px; color:#b79aff; display:inline-block;">${order.code}</span></p>
-                    <p><span>Игрок:</span> ${order.nick}</p>
-                    <p><span>Время:</span> ${order.timestamp}</p>
-                    <p><span>Сумма:</span> ${order.total} VC</p>
-                    <p><span>Услуги:</span></p>
-                    <ul>${itemsHtml}</ul>
-                    <div class="flex-row" style="margin-top:15px;">
-                        <button class="btn-confirm" onclick="confirmOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">✅ Подтвердить</button>
-                        <button class="btn-confirm btn-danger" onclick="cancelOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">❌ Отменить</button>
-                    </div>
-                </div>
-            `;
-        });
-
         content.innerHTML = html;
+
+        // Обработчик выдачи VC
+        document.getElementById('give-btn')?.addEventListener('click', () => {
+            const nick = document.getElementById('give-nick').value.trim();
+            const amount = parseInt(document.getElementById('give-amount').value.trim());
+            const msg = document.getElementById('give-msg');
+            if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
+            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
+            addBalance(nick, amount);
+            msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
+            msg.style.color = '#b79aff';
+            document.getElementById('give-nick').value = '';
+            document.getElementById('give-amount').value = '';
+            updateHeaderBalance();
+        });
     }
 
     window.confirmOrder = function(code) {
@@ -470,15 +564,19 @@
         const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
         const idx = orders.findIndex(o => o.code === code && !o.confirmed);
         if (idx !== -1) {
-            orders[idx].confirmed = true; // помечаем как обработанный (отмена)
+            // Возвращаем деньги
+            const order = orders[idx];
+            addBalance(order.nick, order.total);
+            orders[idx].confirmed = true;
             localStorage.setItem('void_orders', JSON.stringify(orders));
-            alert(`❌ Чек №${code} отменён.`);
+            alert(`❌ Чек №${code} отменён. Средства возвращены.`);
             renderAdminOrders();
             if (currentOrder && currentOrder.code === code) {
                 currentOrder.confirmed = true;
                 document.getElementById('check-content').querySelector('.check-block').innerHTML +=
                     `<p style="color:#ff6b6b; margin-top:10px;">❌ Статус: Отменён</p>`;
             }
+            updateHeaderBalance();
         }
     };
 
