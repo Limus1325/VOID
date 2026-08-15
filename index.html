@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOID · RichClan Shop</title>
+    <title>VOID · Shop</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
+        /* ===== СТИЛИ (без изменений) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0b081a;
@@ -58,6 +62,15 @@
             font-size: 1rem;
             color: #e5daff;
         }
+        .header .session-info {
+            font-size: 0.85rem;
+            color: #7a6a9a;
+            background: #130f21;
+            padding: 6px 16px;
+            border-radius: 40px;
+            border: 1px solid #32284a;
+        }
+        .header .session-info span { color: #b79aff; font-weight: 600; }
         .services-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -96,16 +109,16 @@
             letter-spacing: 0.5px;
         }
         .service-card button:hover { background: #8b6aff; box-shadow: 0 0 20px #6b47d966; }
-        .cart-section, .admin-section, .check-section {
+        .cart-section, .check-section {
             background: #130f21;
             border-radius: 28px;
             padding: 28px 30px;
             border: 1px solid #32284a;
             margin-top: 20px;
         }
-        .cart-section h2, .admin-section h2 { font-size: 1.8rem; margin-bottom: 16px; color: #d4c5ff; display: flex; align-items: center; gap: 12px; }
-        .cart-section ul, .admin-section ul { list-style: none; padding: 0; margin: 0 0 20px 0; }
-        .cart-section li, .admin-section li { padding: 8px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; }
+        .cart-section h2 { font-size: 1.8rem; margin-bottom: 16px; color: #d4c5ff; display: flex; align-items: center; gap: 12px; }
+        .cart-section ul { list-style: none; padding: 0; margin: 0 0 20px 0; }
+        .cart-section li { padding: 8px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; }
         .cart-item-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
         .cart-item-info .item-name { flex: 1; }
         .cart-total { font-size: 1.4rem; font-weight: 700; color: #c2adff; margin: 10px 0 20px; }
@@ -154,7 +167,7 @@
         .check-block .info .code { font-size: 1.8rem; font-weight: 700; color: #b79aff; letter-spacing: 2px; }
         .flex-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
         .hidden { display: none; }
-        .nick-input, .admin-password-input, .give-input {
+        .nick-input, .password-input {
             background: #0b081a;
             border: 1px solid #3b2b5a;
             color: #d9d0f0;
@@ -164,14 +177,14 @@
             outline: none;
         }
         .nick-input { width: 200px; }
-        .admin-password-input, .give-input { width: 160px; }
-        .nick-input:focus, .admin-password-input:focus, .give-input:focus { border-color: #9b7bff; }
+        .password-input { width: 160px; }
+        .nick-input:focus, .password-input:focus { border-color: #9b7bff; }
         @media (max-width: 600px) {
             .header { flex-direction: column; align-items: flex-start; }
             .header .currency { margin-left: 0; }
             .services-grid { grid-template-columns: 1fr; }
             .flex-row { flex-direction: column; align-items: stretch; }
-            .nick-input, .admin-password-input, .give-input { width: 100%; }
+            .nick-input, .password-input { width: 100%; }
             .check-block { flex-direction: column; align-items: center; text-align: center; }
         }
     </style>
@@ -203,6 +216,7 @@
             💎 VC
             <span class="balance-box" id="header-balance">0</span>
         </span>
+        <span class="session-info">👤 <span id="session-nick">Не выбран</span></span>
     </header>
 
     <!-- ===== УСЛУГИ ===== -->
@@ -213,8 +227,9 @@
         <h2>🛒 Корзина</h2>
         <div class="flex-row" style="margin-bottom: 20px;">
             <input type="text" id="player-nick" class="nick-input" placeholder="Ваш игровой ник" required>
-            <span style="color:#7a6a9a; font-size:0.9rem;">(обязательно для заказа)</span>
-            <button class="btn-confirm" id="check-balance-btn" style="padding:10px 25px; font-size:1rem; margin-right:0;">Проверить баланс</button>
+            <input type="password" id="player-password" class="password-input" placeholder="Пароль от ника" required>
+            <button class="btn-confirm" id="check-balance-btn" style="padding:10px 25px; font-size:1rem; margin-right:0;">Войти</button>
+            <button class="btn-danger" id="reset-session-btn" style="padding:10px 25px; font-size:1rem; display:none;">Сменить ник</button>
         </div>
         <ul id="cart-items"><li class="empty-cart">Пока пусто</li></ul>
         <div class="cart-total">Итого: <span id="total-price">0</span> VC</div>
@@ -227,69 +242,68 @@
         <div id="check-content"></div>
     </section>
 
-    <!-- ===== АДМИН-ПАНЕЛЬ ===== -->
-    <section class="admin-section" id="admin-panel">
-        <h2>🔐 Админ-панель</h2>
-        <div class="flex-row" style="margin-bottom:15px;">
-            <input type="password" id="admin-password" class="admin-password-input" placeholder="Пароль">
-            <button class="btn-confirm" id="admin-login-btn" style="padding:10px 25px; font-size:1rem;">Войти</button>
-            <button class="btn-danger" id="admin-logout-btn" style="padding:10px 25px; font-size:1rem; display:none;">Выйти</button>
-        </div>
-        <div id="admin-content">
-            <p style="color:#7a6a9a;">Войдите, чтобы управлять заказами и балансами.</p>
-        </div>
-    </section>
-
 </div>
 
 <script>
     // ============================================================
+    // ========== КОНФИГ FIREBASE (ВСТАВЬТЕ СВОЙ) ==========
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
+        authDomain: "void-e6363.firebaseapp.com",
+        databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
+        projectId: "void-e6363",
+        storageBucket: "void-e6363.firebasestorage.app",
+        messagingSenderId: "123260153615",
+        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ============================================================
     // ========== ДАННЫЕ ==========
     // ============================================================
-    const ADMIN_PASSWORD = 'void2026';
-    let isAdmin = false;
     let cart = [];
     let servicesData = [];
     let currentOrder = null;
-    let currentNick = '';
+    let sessionNick = '';
+    let sessionPassword = '';
 
     // ============================================================
-    // ========== КОШЕЛЁК (BALANCE) ==========
+    // ========== СЛУШАТЕЛИ БАЛАНСА (ОБНОВЛЕНИЕ В РЕАЛЬНОМ ВРЕМЕНИ) ==========
     // ============================================================
-    function getBalances() {
-        return JSON.parse(localStorage.getItem('void_balances')) || {};
+    function listenBalance(nick) {
+        if (!nick) return;
+        const balanceRef = db.ref('balances/' + nick);
+        balanceRef.on('value', (snapshot) => {
+            const val = snapshot.val() || 0;
+            document.getElementById('header-balance').textContent = val;
+        });
     }
 
-    function saveBalances(balances) {
-        localStorage.setItem('void_balances', JSON.stringify(balances));
-    }
-
+    // ============================================================
+    // ========== ФУНКЦИИ РАБОТЫ С БАЗОЙ ==========
+    // ============================================================
     function getBalance(nick) {
-        const balances = getBalances();
-        return balances[nick] || 0;
+        // читаем один раз (для проверки при заказе)
+        return db.ref('balances/' + nick).once('value').then(snap => snap.val() || 0);
     }
 
     function setBalance(nick, amount) {
-        const balances = getBalances();
-        balances[nick] = Math.max(0, amount);
-        saveBalances(balances);
-        if (nick === currentNick) {
-            updateHeaderBalance();
-        }
+        return db.ref('balances/' + nick).set(amount);
     }
 
-    function addBalance(nick, amount) {
-        const current = getBalance(nick);
-        setBalance(nick, current + amount);
+    function getPassword(nick) {
+        return db.ref('passwords/' + nick).once('value').then(snap => snap.val() || null);
     }
 
-    function updateHeaderBalance() {
-        const nick = document.getElementById('player-nick').value.trim();
-        if (nick) {
-            document.getElementById('header-balance').textContent = getBalance(nick);
-        } else {
-            document.getElementById('header-balance').textContent = '0';
-        }
+    function setPassword(nick, pass) {
+        return db.ref('passwords/' + nick).set(pass);
+    }
+
+    function saveOrder(order) {
+        return db.ref('orders/' + order.code).set(order);
     }
 
     // ============================================================
@@ -326,7 +340,14 @@
         });
     }
 
+    // ============================================================
+    // ========== КОРЗИНА ==========
+    // ============================================================
     function addToCart(id) {
+        if (!sessionNick) {
+            alert('Сначала войдите как игрок (введите ник и пароль)');
+            return;
+        }
         const service = servicesData.find(s => s.id === id);
         if (!service) return;
         cart.push(service);
@@ -364,6 +385,62 @@
     }
 
     // ============================================================
+    // ========== ВХОД ИГРОКА ==========
+    // ============================================================
+    document.getElementById('check-balance-btn').addEventListener('click', async () => {
+        const nick = document.getElementById('player-nick').value.trim();
+        const password = document.getElementById('player-password').value.trim();
+
+        if (!nick || !password) {
+            alert('Введите ник и пароль!');
+            return;
+        }
+
+        const storedPass = await getPassword(nick);
+        if (storedPass === null) {
+            // Первый вход — устанавливаем пароль
+            await setPassword(nick, password);
+            await setBalance(nick, 0);
+            alert(`✅ Пароль для ника ${nick} установлен!`);
+        } else if (storedPass !== password) {
+            alert('❌ Неверный пароль!');
+            return;
+        }
+
+        sessionNick = nick;
+        sessionPassword = password;
+        document.getElementById('player-nick').value = '';
+        document.getElementById('player-password').value = '';
+        document.getElementById('player-nick').disabled = true;
+        document.getElementById('player-password').disabled = true;
+        document.getElementById('check-balance-btn').style.display = 'none';
+        document.getElementById('reset-session-btn').style.display = 'inline-block';
+        document.getElementById('session-nick').textContent = nick;
+        listenBalance(nick);
+        cart = [];
+        updateCart();
+        alert(`✅ Вы вошли как ${nick}.`);
+    });
+
+    document.getElementById('reset-session-btn').addEventListener('click', () => {
+        sessionNick = '';
+        sessionPassword = '';
+        document.getElementById('player-nick').disabled = false;
+        document.getElementById('player-password').disabled = false;
+        document.getElementById('player-nick').value = '';
+        document.getElementById('player-password').value = '';
+        document.getElementById('check-balance-btn').style.display = 'inline-block';
+        document.getElementById('reset-session-btn').style.display = 'none';
+        document.getElementById('header-balance').textContent = '0';
+        document.getElementById('session-nick').textContent = 'Не выбран';
+        cart = [];
+        updateCart();
+        // отписываемся от баланса
+        db.ref('balances/' + sessionNick).off();
+        alert('🔄 Сессия сброшена.');
+    });
+
+    // ============================================================
     // ========== ГЕНЕРАЦИЯ ЧЕКА ==========
     // ============================================================
     function generateOrderCode() {
@@ -386,12 +463,9 @@
             confirmed: false
         };
 
-        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-        orders.push(orderData);
-        localStorage.setItem('void_orders', JSON.stringify(orders));
+        saveOrder(orderData);
 
-        const qrText = `ЧЕК №${code}\nНик: ${nick}\nСумма: ${total} VC\nДата: ${timestamp}\nСтатус: Ожидает подтверждения`;
-
+        const qrText = `ЧЕК №${code}\nНик: ${nick}\nСумма: ${total} VC\nДата: ${timestamp}`;
         const itemsHtml = items.map(item => `<li><span>${item.name}</span><span>${item.price} VC</span></li>`).join('');
 
         document.getElementById('check-content').innerHTML = `
@@ -420,191 +494,51 @@
 
         document.getElementById('check-section').classList.remove('hidden');
         currentOrder = orderData;
-        renderAdminOrders();
     }
 
     // ============================================================
     // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
     // ============================================================
-    document.getElementById('buy-btn').addEventListener('click', () => {
-        const nickInput = document.getElementById('player-nick');
-        const nick = nickInput.value.trim();
-
-        if (!nick) {
-            alert('Укажите ваш игровой ник!');
-            nickInput.focus();
+    document.getElementById('buy-btn').addEventListener('click', async () => {
+        if (!sessionNick) {
+            alert('Сначала войдите как игрок (введите ник и пароль)');
             return;
         }
+
         if (cart.length === 0) {
             alert('Корзина пуста!');
             return;
         }
 
+        const checkPass = prompt('Введите пароль от вашего ника для подтверждения заказа:');
+        if (checkPass !== sessionPassword) {
+            alert('❌ Неверный пароль! Заказ отменён.');
+            return;
+        }
+
         const total = cart.reduce((sum, item) => sum + item.price, 0);
-        const balance = getBalance(nick);
+        const balance = await getBalance(sessionNick);
 
         if (balance < total) {
             alert(`❌ Недостаточно VC. Ваш баланс: ${balance} VC, а сумма заказа: ${total} VC.`);
             return;
         }
 
-        // Списываем деньги
-        addBalance(nick, -total);
+        await setBalance(sessionNick, balance - total);
 
         const code = generateOrderCode();
         const items = cart.map(item => ({ name: item.name, price: item.price }));
-
-        createCheck(nick, items, total, code);
+        createCheck(sessionNick, items, total, code);
 
         cart = [];
         updateCart();
-        nickInput.value = '';
-        updateHeaderBalance();
-    });
-
-    // ============================================================
-    // ========== ПРОВЕРКА БАЛАНСА ==========
-    // ============================================================
-    document.getElementById('check-balance-btn').addEventListener('click', () => {
-        const nick = document.getElementById('player-nick').value.trim();
-        if (!nick) {
-            alert('Введите ник!');
-            return;
-        }
-        const balance = getBalance(nick);
-        alert(`💰 Баланс игрока ${nick}: ${balance} VC`);
-        document.getElementById('header-balance').textContent = balance;
-        currentNick = nick;
-    });
-
-    // ============================================================
-    // ========== АДМИН-ПАНЕЛЬ ==========
-    // ============================================================
-    function renderAdminOrders() {
-        const content = document.getElementById('admin-content');
-        if (!isAdmin) {
-            content.innerHTML = '<p style="color:#7a6a9a;">Войдите, чтобы управлять заказами и балансами.</p>';
-            return;
-        }
-
-        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-        const activeOrders = orders.filter(o => !o.confirmed);
-
-        let html = `
-            <div style="margin-bottom:25px; background:#18122b; border-radius:16px; padding:20px; border:1px solid #32284a;">
-                <h3 style="color:#c6b5ff; margin-bottom:12px;">💎 Выдать VC игроку</h3>
-                <div class="flex-row">
-                    <input type="text" id="give-nick" class="give-input" placeholder="Ник игрока">
-                    <input type="number" id="give-amount" class="give-input" placeholder="Сумма" min="1">
-                    <button class="btn-confirm" id="give-btn" style="padding:10px 25px; font-size:1rem;">Выдать</button>
-                </div>
-                <div id="give-msg" style="color:#7a6a9a; margin-top:8px;"></div>
-            </div>
-        `;
-
-        if (activeOrders.length === 0) {
-            html += '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
-        } else {
-            activeOrders.forEach((order, idx) => {
-                const itemsHtml = order.items.map(item =>
-                    `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-                ).join('');
-                html += `
-                    <div class="order-info" style="background:#18122b; border-radius:16px; padding:15px 20px; margin:15px 0; border-left:4px solid #9b7bff;">
-                        <p><span>Код:</span> <span class="order-code" style="background:#0b081a; padding:5px 15px; border-radius:40px; border:1px solid #6b47d9; font-size:1.4rem; font-weight:700; letter-spacing:2px; color:#b79aff; display:inline-block;">${order.code}</span></p>
-                        <p><span>Игрок:</span> ${order.nick}</p>
-                        <p><span>Время:</span> ${order.timestamp}</p>
-                        <p><span>Сумма:</span> ${order.total} VC</p>
-                        <p><span>Услуги:</span></p>
-                        <ul>${itemsHtml}</ul>
-                        <div class="flex-row" style="margin-top:15px;">
-                            <button class="btn-confirm" onclick="confirmOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">✅ Подтвердить</button>
-                            <button class="btn-confirm btn-danger" onclick="cancelOrder('${order.code}')" style="padding:10px 25px; font-size:1rem;">❌ Отменить</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        content.innerHTML = html;
-
-        // Обработчик выдачи VC
-        document.getElementById('give-btn')?.addEventListener('click', () => {
-            const nick = document.getElementById('give-nick').value.trim();
-            const amount = parseInt(document.getElementById('give-amount').value.trim());
-            const msg = document.getElementById('give-msg');
-            if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
-            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
-            addBalance(nick, amount);
-            msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
-            msg.style.color = '#b79aff';
-            document.getElementById('give-nick').value = '';
-            document.getElementById('give-amount').value = '';
-            updateHeaderBalance();
-        });
-    }
-
-    window.confirmOrder = function(code) {
-        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-        const idx = orders.findIndex(o => o.code === code && !o.confirmed);
-        if (idx !== -1) {
-            orders[idx].confirmed = true;
-            localStorage.setItem('void_orders', JSON.stringify(orders));
-            alert(`✅ Чек №${code} подтверждён!`);
-            renderAdminOrders();
-            if (currentOrder && currentOrder.code === code) {
-                currentOrder.confirmed = true;
-                document.getElementById('check-content').querySelector('.check-block').innerHTML +=
-                    `<p style="color:#6fcf97; margin-top:10px;">✅ Статус: Подтверждён</p>`;
-            }
-        }
-    };
-
-    window.cancelOrder = function(code) {
-        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
-        const idx = orders.findIndex(o => o.code === code && !o.confirmed);
-        if (idx !== -1) {
-            // Возвращаем деньги
-            const order = orders[idx];
-            addBalance(order.nick, order.total);
-            orders[idx].confirmed = true;
-            localStorage.setItem('void_orders', JSON.stringify(orders));
-            alert(`❌ Чек №${code} отменён. Средства возвращены.`);
-            renderAdminOrders();
-            if (currentOrder && currentOrder.code === code) {
-                currentOrder.confirmed = true;
-                document.getElementById('check-content').querySelector('.check-block').innerHTML +=
-                    `<p style="color:#ff6b6b; margin-top:10px;">❌ Статус: Отменён</p>`;
-            }
-            updateHeaderBalance();
-        }
-    };
-
-    // ---- Вход/Выход админа ----
-    document.getElementById('admin-login-btn').addEventListener('click', () => {
-        const pass = document.getElementById('admin-password').value.trim();
-        if (pass === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.getElementById('admin-login-btn').style.display = 'none';
-            document.getElementById('admin-logout-btn').style.display = 'inline-block';
-            renderAdminOrders();
-        } else {
-            alert('❌ Неверный пароль!');
-        }
-    });
-
-    document.getElementById('admin-logout-btn').addEventListener('click', () => {
-        isAdmin = false;
-        document.getElementById('admin-login-btn').style.display = 'inline-block';
-        document.getElementById('admin-logout-btn').style.display = 'none';
-        document.getElementById('admin-content').innerHTML = '<p style="color:#7a6a9a;">Войдите, чтобы управлять заказами.</p>';
+        alert(`✅ Заказ оформлен! Чек №${code} сгенерирован.`);
     });
 
     // ============================================================
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
     // ============================================================
     updateCart();
-    renderAdminOrders();
 </script>
 </body>
 </html>
