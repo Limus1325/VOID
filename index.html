@@ -286,7 +286,7 @@
         <button class="btn-buy" id="buy-btn">Оформить заказ</button>
     </section>
 
-    <!-- ===== АДМИН-ПАНЕЛЬ (СКРЫТА ДЛЯ НЕ-АДМИНОВ) ===== -->
+    <!-- ===== АДМИН-ПАНЕЛЬ ===== -->
     <section class="admin-section hidden" id="admin-panel">
         <h2>🔐 Админ-панель</h2>
         <div id="admin-content"></div>
@@ -424,7 +424,6 @@
         updateCart();
     };
 
-    // ===== УДАЛЕНИЕ ИЗ КОРЗИНЫ =====
     window.removeFromCart = function(index) {
         cart.splice(index, 1);
         updateCart();
@@ -566,23 +565,34 @@
             }
 
             try {
+                // 1. Создаём пользователя в Firebase Auth
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Сохраняем данные в Firestore (коллекция 'users', документ = ник)
                 await setDoc(doc(db, "users", nick), {
-                    uid: userCredential.user.uid,
+                    uid: user.uid,
                     email: email,
                     balance: 0,
                     createdAt: new Date().toISOString()
                 });
-                modalMsg.textContent = '✅ Аккаунт создан!';
+
+                modalMsg.textContent = '✅ Аккаунт создан! Вход выполняется...';
                 modalMsg.style.color = '#b79aff';
-                setTimeout(() => modal.classList.remove('active'), 1200);
+                // onAuthStateChanged сам закроет модалку
+
             } catch (error) {
+                console.error("Ошибка регистрации:", error);
                 let msg = '❌ Ошибка регистрации.';
-                if (error.code === 'auth/email-already-in-use') msg = '❌ Email уже используется.';
-                else if (error.code === 'auth/weak-password') msg = '❌ Слишком слабый пароль.';
+                if (error.code === 'auth/email-already-in-use') {
+                    msg = '❌ Этот email уже используется.';
+                } else if (error.code === 'auth/weak-password') {
+                    msg = '❌ Слишком слабый пароль (минимум 6 символов).';
+                } else if (error.code === 'auth/invalid-email') {
+                    msg = '❌ Некорректный email.';
+                }
                 modalMsg.textContent = msg;
                 modalMsg.style.color = '#ff6b6b';
-                console.error(error);
             }
         });
     });
@@ -610,14 +620,19 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 modalMsg.textContent = '✅ Вход выполнен';
                 modalMsg.style.color = '#b79aff';
-                setTimeout(() => modal.classList.remove('active'), 1000);
+                // onAuthStateChanged закроет модалку
             } catch (error) {
+                console.error("Ошибка входа:", error);
                 let msg = '❌ Неверный email или пароль.';
-                if (error.code === 'auth/user-not-found') msg = '❌ Пользователь не найден.';
-                else if (error.code === 'auth/wrong-password') msg = '❌ Неверный пароль.';
+                if (error.code === 'auth/user-not-found') {
+                    msg = '❌ Пользователь не найден.';
+                } else if (error.code === 'auth/wrong-password') {
+                    msg = '❌ Неверный пароль.';
+                } else if (error.code === 'auth/invalid-email') {
+                    msg = '❌ Некорректный email.';
+                }
                 modalMsg.textContent = msg;
                 modalMsg.style.color = '#ff6b6b';
-                console.error(error);
             }
         });
     });
@@ -630,11 +645,12 @@
     // ============================================================
     // ========== СОСТОЯНИЕ АУТЕНТИФИКАЦИИ ==========
     // ============================================================
-    const adminEmails = ['admin@void.com', 'fox@void.com']; // <--- ТОЛЬКО ЭТИ ПОЛЬЗОВАТЕЛИ ВИДЯТ АДМИНКУ
+    const adminEmails = ['admin@void.com', 'fox@void.com']; // Администраторы
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
+            // Ищем ник в Firestore
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("uid", "==", user.uid));
             const querySnapshot = await getDocs(q);
@@ -647,7 +663,7 @@
                 document.getElementById('header-balance').textContent = '0';
             }
             updateAuthUI(true, user.email);
-            renderAdminPanel(); // <--- админка показывается ТОЛЬКО если email в списке
+            renderAdminPanel();
             modal.classList.remove('active');
         } else {
             currentUser = null;
@@ -678,7 +694,7 @@
     }
 
     // ============================================================
-    // ========== АДМИН-ПАНЕЛЬ (ТОЛЬКО ДЛЯ ADMIN EMAILS) ==========
+    // ========== АДМИН-ПАНЕЛЬ ==========
     // ============================================================
     async function renderAdminPanel() {
         const panel = document.getElementById('admin-panel');
@@ -689,13 +705,12 @@
             return;
         }
 
-        // Проверяем, входит ли email текущего пользователя в список админов
+        // Проверяем, админ ли этот email
         if (!adminEmails.includes(currentUser.email)) {
             panel.classList.add('hidden');
             return;
         }
 
-        // Если админ — показываем панель
         panel.classList.remove('hidden');
 
         // Загружаем активные заказы
