@@ -8,12 +8,12 @@
         {
             "imports": {
                 "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
             }
         }
     </script>
     <style>
+        /* ===== ВСЕ СТИЛИ (без изменений) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0b081a;
@@ -306,7 +306,7 @@
 
 <script type="module">
     // ============================================================
-    // ========== ИМПОРТ FIREBASE ==========
+    // ========== FIREBASE (ТОЛЬКО АУТЕНТИФИКАЦИЯ) ==========
     // ============================================================
     import { initializeApp } from 'firebase/app';
     import {
@@ -316,38 +316,21 @@
         onAuthStateChanged,
         signOut
     } from 'firebase/auth';
-    import {
-        getFirestore,
-        doc,
-        getDoc,
-        setDoc,
-        updateDoc,
-        collection,
-        query,
-        where,
-        getDocs
-    } from 'firebase/firestore';
 
-    // ============================================================
-    // ========== КОНФИГУРАЦИЯ FIREBASE ==========
-    // ============================================================
     const firebaseConfig = {
         apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
         authDomain: "void-e6363.firebaseapp.com",
-        databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
         projectId: "void-e6363",
         storageBucket: "void-e6363.firebasestorage.app",
         messagingSenderId: "123260153615",
-        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a",
-        measurementId: "G-Y6FV25WY7Y"
+        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
 
     // ============================================================
-    // ========== ДАННЫЕ ПРИЛОЖЕНИЯ ==========
+    // ========== ДАННЫЕ (LOCALSTORAGE) ==========
     // ============================================================
     let cart = [];
     let servicesData = [];
@@ -355,32 +338,32 @@
     let currentUser = null;
     let currentUserNick = null;
 
-    // ============================================================
-    // ========== ФУНКЦИИ ДЛЯ FIRESTORE ==========
-    // ============================================================
-    async function getUserData(nick) {
-        if (!nick) return null;
-        const docRef = doc(db, "users", nick);
-        const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() : null;
+    // Балансы и заказы хранятся в localStorage
+    function getBalances() {
+        return JSON.parse(localStorage.getItem('void_balances')) || {};
     }
 
-    async function getBalance(nick) {
-        const data = await getUserData(nick);
-        return data?.balance || 0;
+    function saveBalances(balances) {
+        localStorage.setItem('void_balances', JSON.stringify(balances));
     }
 
-    async function setBalance(nick, amount) {
-        const docRef = doc(db, "users", nick);
-        await setDoc(docRef, { balance: Math.max(0, amount) }, { merge: true });
+    function getBalance(nick) {
+        const balances = getBalances();
+        return balances[nick] || 0;
+    }
+
+    function setBalance(nick, amount) {
+        const balances = getBalances();
+        balances[nick] = Math.max(0, amount);
+        saveBalances(balances);
         if (currentUserNick === nick) {
             document.getElementById('header-balance').textContent = amount;
         }
     }
 
-    async function addBalance(nick, amount) {
-        const current = await getBalance(nick);
-        await setBalance(nick, current + amount);
+    function addBalance(nick, amount) {
+        const current = getBalance(nick);
+        setBalance(nick, current + amount);
     }
 
     // ============================================================
@@ -487,39 +470,35 @@
         }
 
         const total = cart.reduce((sum, item) => sum + item.price, 0);
-        const balance = await getBalance(nick);
+        const balance = getBalance(nick);
         if (balance < total) {
             alert(`❌ Недостаточно VC. Баланс: ${balance} VC`);
             return;
         }
 
         const code = generateOrderCode();
-        await addBalance(nick, -total);
+        addBalance(nick, -total);
 
         const items = cart.map(item => ({ name: item.name, price: item.price }));
         activeOrder = { code, nick, items, total, timestamp: new Date().toLocaleString(), confirmed: false };
 
-        try {
-            const orderRef = doc(db, "orders", code);
-            await setDoc(orderRef, {
-                nick,
-                items,
-                total,
-                timestamp: new Date().toISOString(),
-                confirmed: false
-            });
-        } catch (e) {
-            console.error("Ошибка сохранения заказа:", e);
-            await addBalance(nick, total);
-            alert('❌ Ошибка при оформлении заказа.');
-            return;
-        }
+        // Сохраняем заказ в localStorage
+        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+        orders.push({
+            code,
+            nick,
+            items,
+            total,
+            timestamp: new Date().toISOString(),
+            confirmed: false
+        });
+        localStorage.setItem('void_orders', JSON.stringify(orders));
 
         cart = [];
         updateCart();
         nickInput.value = '';
         if (currentUserNick === nick) {
-            document.getElementById('header-balance').textContent = await getBalance(nick);
+            document.getElementById('header-balance').textContent = getBalance(nick);
         }
         alert(`✅ Заказ оформлен!\nКод: ${code}\nНик: ${nick}\nСумма: ${total} VC`);
         renderAdminPanel();
@@ -565,34 +544,21 @@
             }
 
             try {
-                // 1. Создаём пользователя в Firebase Auth
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // 2. Сохраняем данные в Firestore (коллекция 'users', документ = ник)
-                await setDoc(doc(db, "users", nick), {
-                    uid: user.uid,
-                    email: email,
-                    balance: 0,
-                    createdAt: new Date().toISOString()
-                });
-
+                await createUserWithEmailAndPassword(auth, email, password);
+                // Сохраняем ник в localStorage
+                const users = JSON.parse(localStorage.getItem('void_users')) || {};
+                users[email] = { nick, balance: 0 };
+                localStorage.setItem('void_users', JSON.stringify(users));
                 modalMsg.textContent = '✅ Аккаунт создан! Вход выполняется...';
                 modalMsg.style.color = '#b79aff';
-                // onAuthStateChanged сам закроет модалку
-
             } catch (error) {
-                console.error("Ошибка регистрации:", error);
                 let msg = '❌ Ошибка регистрации.';
-                if (error.code === 'auth/email-already-in-use') {
-                    msg = '❌ Этот email уже используется.';
-                } else if (error.code === 'auth/weak-password') {
-                    msg = '❌ Слишком слабый пароль (минимум 6 символов).';
-                } else if (error.code === 'auth/invalid-email') {
-                    msg = '❌ Некорректный email.';
-                }
+                if (error.code === 'auth/email-already-in-use') msg = '❌ Этот email уже используется.';
+                else if (error.code === 'auth/weak-password') msg = '❌ Слишком слабый пароль.';
+                else if (error.code === 'auth/invalid-email') msg = '❌ Некорректный email.';
                 modalMsg.textContent = msg;
                 modalMsg.style.color = '#ff6b6b';
+                console.error(error);
             }
         });
     });
@@ -620,19 +586,13 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 modalMsg.textContent = '✅ Вход выполнен';
                 modalMsg.style.color = '#b79aff';
-                // onAuthStateChanged закроет модалку
             } catch (error) {
-                console.error("Ошибка входа:", error);
                 let msg = '❌ Неверный email или пароль.';
-                if (error.code === 'auth/user-not-found') {
-                    msg = '❌ Пользователь не найден.';
-                } else if (error.code === 'auth/wrong-password') {
-                    msg = '❌ Неверный пароль.';
-                } else if (error.code === 'auth/invalid-email') {
-                    msg = '❌ Некорректный email.';
-                }
+                if (error.code === 'auth/user-not-found') msg = '❌ Пользователь не найден.';
+                else if (error.code === 'auth/wrong-password') msg = '❌ Неверный пароль.';
                 modalMsg.textContent = msg;
                 modalMsg.style.color = '#ff6b6b';
+                console.error(error);
             }
         });
     });
@@ -645,19 +605,15 @@
     // ============================================================
     // ========== СОСТОЯНИЕ АУТЕНТИФИКАЦИИ ==========
     // ============================================================
-    const adminEmails = ['admin@void.com', 'fox@void.com']; // Администраторы
+    const adminEmails = ['admin@void.com', 'fox@void.com'];
 
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
-            // Ищем ник в Firestore
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("uid", "==", user.uid));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const docData = querySnapshot.docs[0].data();
-                currentUserNick = querySnapshot.docs[0].id;
-                document.getElementById('header-balance').textContent = docData.balance || 0;
+            const users = JSON.parse(localStorage.getItem('void_users')) || {};
+            if (users[user.email]) {
+                currentUserNick = users[user.email].nick;
+                document.getElementById('header-balance').textContent = getBalance(currentUserNick);
             } else {
                 currentUserNick = null;
                 document.getElementById('header-balance').textContent = '0';
@@ -681,7 +637,7 @@
         const logoutBtn = document.getElementById('logout-btn');
 
         if (isLoggedIn) {
-            display.textContent = email || currentUser?.email || 'Пользователь';
+            display.textContent = email || 'Пользователь';
             loginBtn.classList.add('hidden');
             registerBtn.classList.add('hidden');
             logoutBtn.classList.remove('hidden');
@@ -694,9 +650,9 @@
     }
 
     // ============================================================
-    // ========== АДМИН-ПАНЕЛЬ ==========
+    // ========== АДМИН-ПАНЕЛЬ (ИЗ LOCALSTORAGE) ==========
     // ============================================================
-    async function renderAdminPanel() {
+    function renderAdminPanel() {
         const panel = document.getElementById('admin-panel');
         const content = document.getElementById('admin-content');
 
@@ -705,7 +661,6 @@
             return;
         }
 
-        // Проверяем, админ ли этот email
         if (!adminEmails.includes(currentUser.email)) {
             panel.classList.add('hidden');
             return;
@@ -713,38 +668,31 @@
 
         panel.classList.remove('hidden');
 
-        // Загружаем активные заказы
-        let ordersHtml = '';
-        try {
-            const ordersRef = collection(db, "orders");
-            const q = query(ordersRef, where("confirmed", "==", false));
-            const querySnapshot = await getDocs(q);
+        const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+        const activeOrders = orders.filter(o => !o.confirmed);
 
-            if (!querySnapshot.empty) {
-                const docData = querySnapshot.docs[0].data();
-                const itemsList = docData.items.map(item =>
-                    `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-                ).join('');
-                ordersHtml = `
-                    <div class="order-info">
-                        <p><span>Код:</span> <span class="order-code">${querySnapshot.docs[0].id}</span></p>
-                        <p><span>Игрок:</span> ${docData.nick}</p>
-                        <p><span>Время:</span> ${new Date(docData.timestamp).toLocaleString()}</p>
-                        <p><span>Сумма:</span> ${docData.total} VC</p>
-                        <p><span>Услуги:</span></p>
-                        <ul>${itemsList}</ul>
-                    </div>
-                    <div class="flex-row">
-                        <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
-                        <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
-                    </div>
-                `;
-            } else {
-                ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
-            }
-        } catch (e) {
-            console.error("Ошибка загрузки заказов:", e);
-            ordersHtml = `<p style="color:#ff6b6b;">Ошибка загрузки заказов.</p>`;
+        let ordersHtml = '';
+        if (activeOrders.length > 0) {
+            const order = activeOrders[0];
+            const itemsList = order.items.map(item =>
+                `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+            ).join('');
+            ordersHtml = `
+                <div class="order-info">
+                    <p><span>Код:</span> <span class="order-code">${order.code}</span></p>
+                    <p><span>Игрок:</span> ${order.nick}</p>
+                    <p><span>Время:</span> ${new Date(order.timestamp).toLocaleString()}</p>
+                    <p><span>Сумма:</span> ${order.total} VC</p>
+                    <p><span>Услуги:</span></p>
+                    <ul>${itemsList}</ul>
+                </div>
+                <div class="flex-row">
+                    <button class="btn-confirm" id="confirm-order-btn">✅ Подтвердить</button>
+                    <button class="btn-confirm btn-danger" id="cancel-order-btn">❌ Отменить</button>
+                </div>
+            `;
+        } else {
+            ordersHtml = `<p style="color:#7a6a9a;">Нет активных заказов.</p>`;
         }
 
         content.innerHTML = `
@@ -761,51 +709,36 @@
             </div>
         `;
 
-        // Подтверждение заказа
-        document.getElementById('confirm-order-btn')?.addEventListener('click', async () => {
-            try {
-                const ordersRef = collection(db, "orders");
-                const q = query(ordersRef, where("confirmed", "==", false));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const docRef = querySnapshot.docs[0].ref;
-                    await updateDoc(docRef, { confirmed: true });
-                    alert('✅ Заказ подтверждён!');
-                    renderAdminPanel();
-                }
-            } catch (e) {
-                console.error("Ошибка подтверждения:", e);
-                alert('❌ Ошибка подтверждения заказа.');
+        document.getElementById('confirm-order-btn')?.addEventListener('click', () => {
+            const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+            const idx = orders.findIndex(o => o.code === activeOrders[0].code && !o.confirmed);
+            if (idx !== -1) {
+                orders[idx].confirmed = true;
+                localStorage.setItem('void_orders', JSON.stringify(orders));
+                alert('✅ Заказ подтверждён!');
+                renderAdminPanel();
             }
         });
 
-        // Отмена заказа
-        document.getElementById('cancel-order-btn')?.addEventListener('click', async () => {
-            try {
-                const ordersRef = collection(db, "orders");
-                const q = query(ordersRef, where("confirmed", "==", false));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const docData = querySnapshot.docs[0].data();
-                    await addBalance(docData.nick, docData.total);
-                    await updateDoc(querySnapshot.docs[0].ref, { confirmed: true });
-                    alert('❌ Заказ отменён, средства возвращены.');
-                    renderAdminPanel();
-                }
-            } catch (e) {
-                console.error("Ошибка отмены:", e);
-                alert('❌ Ошибка отмены заказа.');
+        document.getElementById('cancel-order-btn')?.addEventListener('click', () => {
+            const orders = JSON.parse(localStorage.getItem('void_orders')) || [];
+            const idx = orders.findIndex(o => o.code === activeOrders[0].code && !o.confirmed);
+            if (idx !== -1) {
+                addBalance(activeOrders[0].nick, activeOrders[0].total);
+                orders[idx].confirmed = true;
+                localStorage.setItem('void_orders', JSON.stringify(orders));
+                alert('❌ Заказ отменён, средства возвращены.');
+                renderAdminPanel();
             }
         });
 
-        // Выдача VC
-        document.getElementById('give-btn')?.addEventListener('click', async () => {
+        document.getElementById('give-btn')?.addEventListener('click', () => {
             const nick = document.getElementById('give-nick').value.trim();
             const amount = parseInt(document.getElementById('give-amount').value.trim());
             const msg = document.getElementById('give-msg');
             if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
             if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
-            await addBalance(nick, amount);
+            addBalance(nick, amount);
             msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
             msg.style.color = '#b79aff';
             document.getElementById('give-nick').value = '';
