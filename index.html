@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
+        /* ===== ОБЩИЕ СТИЛИ ===== */
         * {
             margin: 0;
             padding: 0;
@@ -23,7 +24,7 @@
             align-items: center;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             width: 100%;
         }
         .header {
@@ -40,6 +41,12 @@
             background: linear-gradient(135deg, #b79aff, #7a4cff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+        }
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
         }
         .btn-admin {
             background: #2a1a3a;
@@ -84,16 +91,139 @@
         .btn-danger:hover {
             background: #6a3a5a;
         }
-        .admin-box {
+        .btn-secondary {
+            background: #1a1230;
+            color: #d9d0f0;
+            border: 1px solid #3b2b5a;
+            border-radius: 40px;
+            padding: 10px 25px;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+        .btn-secondary:hover {
+            background: #2a1a4a;
+            border-color: #7a4cff;
+        }
+
+        /* ===== КАТАЛОГ ===== */
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .product-card {
+            background: #130f21;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #32284a;
+            text-align: center;
+            transition: 0.25s;
+        }
+        .product-card:hover {
+            border-color: #7a4cff;
+            box-shadow: 0 0 30px #7a4cff22;
+            transform: translateY(-3px);
+        }
+        .product-card h3 {
+            color: #d4c5ff;
+            margin-bottom: 8px;
+        }
+        .product-card .price {
+            color: #b79aff;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        .product-card .desc {
+            color: #7a6a9a;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+
+        /* ===== КОРЗИНА ===== */
+        .cart-box {
             background: #130f21;
             border-radius: 28px;
             padding: 25px 30px;
             border: 1px solid #32284a;
-            margin-top: 20px;
+            margin: 20px 0;
         }
-        .admin-box h2 {
+        .cart-box h2 {
             color: #d4c5ff;
             margin-bottom: 15px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #26203b;
+        }
+        .cart-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #b79aff;
+            margin: 15px 0;
+            text-align: right;
+        }
+
+        /* ===== АДМИН-МОДАЛКА ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #130f21;
+            border-radius: 32px;
+            border: 1px solid #3b2b5a;
+            max-width: 750px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 0 60px #7a4cff33;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            color: #7a6a9a;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .modal-close:hover {
+            color: #d9d0f0;
+        }
+        .modal h2 {
+            color: #d4c5ff;
+            margin-bottom: 20px;
+        }
+        .admin-box {
+            background: #0b081a;
+            border-radius: 20px;
+            padding: 20px 25px;
+            border: 1px solid #32284a;
+            margin-top: 20px;
+        }
+        .admin-box h3 {
+            color: #c6b5ff;
+            margin-bottom: 12px;
         }
         .flex-row {
             display: flex;
@@ -132,7 +262,7 @@
             font-weight: 600;
         }
         .order-card .code {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #b79aff;
             letter-spacing: 2px;
@@ -154,10 +284,6 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-        .order-actions button {
-            padding: 8px 20px;
-            font-size: 0.9rem;
-        }
         .player-item {
             display: flex;
             justify-content: space-between;
@@ -168,53 +294,6 @@
             color: #7a6a9a;
             margin-top: 8px;
         }
-
-        /* ===== МОДАЛЬНОЕ ОКНО ===== */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-overlay.active {
-            display: flex;
-        }
-        .modal {
-            background: #130f21;
-            border-radius: 32px;
-            border: 1px solid #3b2b5a;
-            max-width: 700px;
-            width: 95%;
-            max-height: 90vh;
-            overflow-y: auto;
-            padding: 30px;
-            position: relative;
-            box-shadow: 0 0 60px #7a4cff33;
-        }
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 1.8rem;
-            color: #7a6a9a;
-            cursor: pointer;
-            background: none;
-            border: none;
-        }
-        .modal-close:hover {
-            color: #d9d0f0;
-        }
-        .modal h2 {
-            color: #d4c5ff;
-            margin-bottom: 20px;
-        }
         .hidden {
             display: none;
         }
@@ -222,281 +301,357 @@
             max-width: 400px;
             margin: 0 auto;
         }
+        .text-center {
+            text-align: center;
+        }
         @media (max-width: 600px) {
             .flex-row {
                 flex-direction: column;
                 align-items: stretch;
             }
+            .catalog-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>🔮 VOID – Магазин</h1>
+
+<div class="container">
+    <!-- ===== ШАПКА ===== -->
+    <header class="header">
+        <h1>🔮 VOID – Магазин</h1>
+        <div class="header-actions">
             <button class="btn-admin" id="open-admin-btn">⚙️ Админ</button>
-        </header>
-
-        <!-- ОСНОВНОЙ КОНТЕНТ ДЛЯ ИГРОКОВ (можно заполнить позже) -->
-        <div class="admin-box" style="border-left: 4px solid #7a4cff;">
-            <h2>Добро пожаловать в VOID</h2>
-            <p style="color:#7a6a9a;">Здесь будет основной интерфейс магазина для игроков.</p>
         </div>
-    </div>
+    </header>
 
-    <!-- ===== МОДАЛЬНОЕ ОКНО АДМИН-ПАНЕЛИ ===== -->
-    <div class="modal-overlay" id="admin-modal">
-        <div class="modal">
-            <button class="modal-close" id="close-admin-modal">&times;</button>
-            <h2>🔐 Админ-панель VOID</h2>
+    <!-- ===== КАТАЛОГ ===== -->
+    <section>
+        <h2 style="color:#d4c5ff; margin-bottom:15px;">🛒 Товары</h2>
+        <div class="catalog-grid" id="catalog-grid"></div>
+    </section>
 
-            <!-- ВХОД -->
-            <div id="admin-login-section" class="login-box">
+    <!-- ===== КОРЗИНА ===== -->
+    <section class="cart-box" id="cart-section">
+        <h2>🛍️ Корзина</h2>
+        <div id="cart-items"></div>
+        <div class="cart-total" id="cart-total">Итого: 0 VC</div>
+        <div class="flex-row">
+            <input type="text" id="cart-nick" placeholder="Ваш ник" style="flex:2;">
+            <button class="btn-confirm" id="checkout-btn">💳 Оформить заказ</button>
+        </div>
+        <div id="cart-msg" class="msg"></div>
+    </section>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО: АДМИН-ПАНЕЛЬ ===== -->
+<div class="modal-overlay" id="admin-modal">
+    <div class="modal">
+        <button class="modal-close" id="close-admin-modal">&times;</button>
+        <h2>🔐 Админ-панель VOID</h2>
+
+        <!-- ВХОД -->
+        <div id="admin-login-section" class="login-box">
+            <div class="flex-row">
+                <input type="password" id="admin-password" placeholder="Пароль админа">
+                <button class="btn-confirm" id="admin-login-btn">Войти</button>
+            </div>
+            <div id="login-msg" class="msg"></div>
+        </div>
+
+        <!-- АДМИН-КОНТЕНТ -->
+        <div id="admin-content" class="hidden">
+            <!-- Выдача VC -->
+            <div class="admin-box">
+                <h3>💎 Выдать VC</h3>
                 <div class="flex-row">
-                    <input type="password" id="admin-password" placeholder="Пароль админа">
-                    <button class="btn-confirm" id="admin-login-btn">Войти</button>
+                    <input type="text" id="give-nick" placeholder="Ник игрока">
+                    <input type="number" id="give-amount" placeholder="Сумма" min="1">
+                    <button class="btn-confirm" id="give-btn">Выдать</button>
                 </div>
-                <div id="login-msg" class="msg"></div>
+                <div id="give-msg" class="msg"></div>
             </div>
 
-            <!-- АДМИН-КОНТЕНТ (скрыт до входа) -->
-            <div id="admin-content" class="hidden">
-                <!-- Выдача VC -->
-                <div class="admin-box">
-                    <h2>💎 Выдать VC</h2>
-                    <div class="flex-row">
-                        <input type="text" id="give-nick" placeholder="Ник игрока">
-                        <input type="number" id="give-amount" placeholder="Сумма" min="1">
-                        <button class="btn-confirm" id="give-btn">Выдать</button>
-                    </div>
-                    <div id="give-msg" class="msg"></div>
-                </div>
-
-                <!-- Игроки -->
-                <div class="admin-box">
-                    <h2>👥 Игроки и балансы</h2>
-                    <div id="players-list"></div>
-                </div>
-
-                <!-- Активные заказы -->
-                <div class="admin-box">
-                    <h2>🧾 Активные заказы</h2>
-                    <div id="orders-list"></div>
-                </div>
-
-                <!-- Архив -->
-                <div class="admin-box">
-                    <h2>📦 Архив заказов</h2>
-                    <div id="archive-list"></div>
-                </div>
-
-                <button class="btn-danger" id="admin-logout-btn" style="margin-top:15px;">Выйти из админки</button>
+            <!-- Игроки -->
+            <div class="admin-box">
+                <h3>👥 Игроки и балансы</h3>
+                <div id="players-list"></div>
             </div>
+
+            <!-- Активные заказы -->
+            <div class="admin-box">
+                <h3>🧾 Активные заказы</h3>
+                <div id="orders-list"></div>
+            </div>
+
+            <!-- Архив -->
+            <div class="admin-box">
+                <h3>📦 Архив заказов</h3>
+                <div id="archive-list"></div>
+            </div>
+
+            <button class="btn-danger" id="admin-logout-btn" style="margin-top:15px;">Выйти из админки</button>
         </div>
     </div>
+</div>
 
-    <script>
-        // ============================================================
-        // ========== КОНФИГ FIREBASE (ВАШ) ==========
-        // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
-            authDomain: "void-e6363.firebaseapp.com",
-            databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
-            projectId: "void-e6363",
-            storageBucket: "void-e6363.firebasestorage.app",
-            messagingSenderId: "123260153615",
-            appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
+<script>
+    // ============================================================
+    // ========== КОНФИГ FIREBASE ==========
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
+        authDomain: "void-e6363.firebaseapp.com",
+        databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
+        projectId: "void-e6363",
+        storageBucket: "void-e6363.firebasestorage.app",
+        messagingSenderId: "123260153615",
+        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ============================================================
+    // ========== ДАННЫЕ ==========
+    // ============================================================
+    const ADMIN_PASSWORD = 'void2026';
+    let isAdmin = false;
+
+    // Каталог товаров
+    const products = [
+        { id: 'vip1', name: 'VIP-статус', price: 150, desc: 'Доступ к /fly, /vip, эксклюзивный чат' },
+        { id: 'vip2', name: 'Элитный VIP', price: 350, desc: 'Всё из VIP + /god, /heal, /nick' },
+        { id: 'key1', name: 'Ключ кейса', price: 50, desc: 'Шанс выбить редкий предмет' },
+        { id: 'key5', name: '5 ключей', price: 200, desc: '5 ключей со скидкой' },
+        { id: 'coin1', name: '1000 монет', price: 100, desc: 'Игровая валюта для магазина' },
+        { id: 'skin1', name: 'Кастомный скин', price: 80, desc: 'Уникальный скин на выбор' },
+    ];
+
+    let cart = [];
+
+    // ============================================================
+    // ========== РЕНДЕР КАТАЛОГА ==========
+    // ============================================================
+    function renderCatalog() {
+        const grid = document.getElementById('catalog-grid');
+        grid.innerHTML = products.map(p => `
+            <div class="product-card">
+                <h3>${p.name}</h3>
+                <div class="price">${p.price} VC</div>
+                <div class="desc">${p.desc}</div>
+                <button class="btn-confirm" onclick="addToCart('${p.id}')">В корзину</button>
+            </div>
+        `).join('');
+    }
+
+    // ============================================================
+    // ========== КОРЗИНА ==========
+    // ============================================================
+    function addToCart(id) {
+        const product = products.find(p => p.id === id);
+        if (!product) return;
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.qty += 1;
+        } else {
+            cart.push({ ...product, qty: 1 });
+        }
+        renderCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cart-items');
+        if (cart.length === 0) {
+            container.innerHTML = '<p style="color:#7a6a9a;">Корзина пуста</p>';
+            document.getElementById('cart-total').textContent = 'Итого: 0 VC';
+            return;
+        }
+        container.innerHTML = cart.map(item => `
+            <div class="cart-item">
+                <span>${item.name} × ${item.qty}</span>
+                <span>${item.price * item.qty} VC <button class="btn-danger" style="padding:2px 12px; margin-left:10px;" onclick="removeFromCart('${item.id}')">✕</button></span>
+            </div>
+        `).join('');
+        const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+        document.getElementById('cart-total').textContent = `Итого: ${total} VC`;
+    }
+
+    // ============================================================
+    // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
+    // ============================================================
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+        const nick = document.getElementById('cart-nick').value.trim();
+        const msg = document.getElementById('cart-msg');
+        if (!nick) { msg.textContent = '❌ Введите ваш ник'; msg.style.color = '#ff6b6b'; return; }
+        if (cart.length === 0) { msg.textContent = '❌ Корзина пуста'; msg.style.color = '#ff6b6b'; return; }
+
+        const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+        // Проверяем баланс
+        const balanceSnap = await db.ref('balances/' + nick).once('value');
+        const balance = balanceSnap.val() || 0;
+        if (balance < total) {
+            msg.textContent = `❌ Недостаточно VC. У вас ${balance}, нужно ${total}`;
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+
+        // Списываем VC
+        await db.ref('balances/' + nick).set(balance - total);
+
+        // Создаём заказ
+        const code = Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
+        const orderData = {
+            nick: nick,
+            total: total,
+            items: cart.map(item => ({ name: item.name, price: item.price, qty: item.qty })),
+            timestamp: new Date().toLocaleString('ru-RU'),
+            confirmed: false,
+            code: code
         };
+        await db.ref('orders/' + code).set(orderData);
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // Очищаем корзину
+        cart = [];
+        renderCart();
+        document.getElementById('cart-nick').value = '';
+        msg.textContent = `✅ Заказ оформлен! ЧЕК №${code} отправлен на подтверждение.`;
+        msg.style.color = '#b79aff';
+    });
 
-        // ============================================================
-        // ========== ДАННЫЕ ==========
-        // ============================================================
-        const ADMIN_PASSWORD = 'void2026';
-        let isAdmin = false;
+    // ============================================================
+    // ========== АДМИН-ФУНКЦИИ ==========
+    // ============================================================
+    function getBalances() { return db.ref('balances').once('value').then(s => s.val() || {}); }
+    function getOrders() { return db.ref('orders').once('value').then(s => s.val() || {}); }
+    function getPasswords() { return db.ref('passwords').once('value').then(s => s.val() || {}); }
+    function setBalance(nick, amount) { return db.ref('balances/' + nick).set(amount); }
+    function updateOrder(code, data) { return db.ref('orders/' + code).update(data); }
 
-        // ============================================================
-        // ========== РАБОТА С БАЗОЙ ==========
-        // ============================================================
-        function getBalances() {
-            return db.ref('balances').once('value').then(snap => snap.val() || {});
-        }
+    async function renderAdmin() {
+        if (!isAdmin) return;
+        const balances = await getBalances();
+        const passwords = await getPasswords();
+        const nicks = Object.keys(balances);
+        let playersHtml = nicks.length === 0 ? '<p style="color:#7a6a9a;">Нет игроков</p>' :
+            nicks.map(n => `<div class="player-item"><span>${passwords[n] ? '🔒' : '🔓'} ${n}</span><span>${balances[n]} VC</span></div>`).join('');
+        document.getElementById('players-list').innerHTML = playersHtml;
 
-        function getOrders() {
-            return db.ref('orders').once('value').then(snap => snap.val() || {});
-        }
+        const ordersData = await getOrders();
+        const orders = Object.values(ordersData);
+        const active = orders.filter(o => !o.confirmed);
+        let ordersHtml = active.length === 0 ? '<p style="color:#7a6a9a;">Нет активных заказов</p>' :
+            active.map(o => `
+                <div class="order-card">
+                    <p><span class="code">ЧЕК №${o.code}</span></p>
+                    <p><span>Игрок:</span> ${o.nick} | <span>Сумма:</span> ${o.total} VC</p>
+                    <p><span>Дата:</span> ${o.timestamp}</p>
+                    <ul>${o.items.map(i => `<li><span>${i.name} × ${i.qty}</span><span>${i.price * i.qty} VC</span></li>`).join('')}</ul>
+                    <div class="order-actions">
+                        <button class="btn-confirm" onclick="confirmOrder('${o.code}')">✅ Подтвердить</button>
+                        <button class="btn-confirm" style="background:#4a2a4a;color:#d9d0f0;" onclick="cancelOrder('${o.code}')">❌ Отменить</button>
+                    </div>
+                </div>
+            `).join('');
+        document.getElementById('orders-list').innerHTML = ordersHtml;
 
-        function getPasswords() {
-            return db.ref('passwords').once('value').then(snap => snap.val() || {});
-        }
+        const archived = orders.filter(o => o.confirmed);
+        document.getElementById('archive-list').innerHTML = archived.length === 0 ? '<p style="color:#7a6a9a;">Архив пуст</p>' :
+            archived.map(o => `
+                <div class="order-card" style="border-left-color:#6fcf97;">
+                    <p><span class="code">ЧЕК №${o.code}</span> <span style="color:#6fcf97;">✅ Завершён</span></p>
+                    <p><span>Игрок:</span> ${o.nick} | <span>Сумма:</span> ${o.total} VC</p>
+                </div>
+            `).join('');
+    }
 
-        function setBalance(nick, amount) {
-            return db.ref('balances/' + nick).set(amount);
-        }
+    window.confirmOrder = function(code) {
+        updateOrder(code, { confirmed: true });
+        renderAdmin();
+    };
 
-        function updateOrder(code, data) {
-            return db.ref('orders/' + code).update(data);
-        }
-
-        // ============================================================
-        // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
-        // ============================================================
-        async function renderAdmin() {
-            if (!isAdmin) return;
-
-            // ---- Игроки ----
-            const balances = await getBalances();
-            const passwords = await getPasswords();
-            let playersHtml = '';
-            const nicks = Object.keys(balances);
-            if (nicks.length === 0) {
-                playersHtml = '<p style="color:#7a6a9a;">Нет зарегистрированных игроков.</p>';
-            } else {
-                nicks.forEach(nick => {
-                    const hasPass = passwords[nick] ? '🔒' : '🔓';
-                    playersHtml += `<div class="player-item"><span>${hasPass} <span style="color:#b79aff;">${nick}</span></span><span>${balances[nick]} VC</span></div>`;
-                });
-            }
-            document.getElementById('players-list').innerHTML = playersHtml;
-
-            // ---- Заказы ----
-            const ordersData = await getOrders();
-            const orders = Object.values(ordersData);
-            const active = orders.filter(o => !o.confirmed);
-            let ordersHtml = '';
-            if (active.length === 0) {
-                ordersHtml = '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
-            } else {
-                active.forEach(order => {
-                    const itemsHtml = order.items.map(item =>
-                        `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
-                    ).join('');
-                    ordersHtml += `
-                        <div class="order-card">
-                            <p><span class="code">ЧЕК №${order.code}</span></p>
-                            <p><span>Игрок:</span> ${order.nick}</p>
-                            <p><span>Сумма:</span> ${order.total} VC</p>
-                            <p><span>Дата:</span> ${order.timestamp}</p>
-                            <ul>${itemsHtml}</ul>
-                            <div class="order-actions">
-                                <button class="btn-confirm" onclick="confirmOrder('${order.code}')">✅ Подтвердить</button>
-                                <button class="btn-confirm" style="background:#4a2a4a; color:#d9d0f0;" onclick="cancelOrder('${order.code}')">❌ Отменить</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('orders-list').innerHTML = ordersHtml;
-
-            // ---- Архив ----
-            const archived = orders.filter(o => o.confirmed);
-            let archiveHtml = '';
-            if (archived.length === 0) {
-                archiveHtml = '<p style="color:#7a6a9a;">Архив пуст.</p>';
-            } else {
-                archived.forEach(order => {
-                    archiveHtml += `
-                        <div class="order-card" style="border-left-color:#6fcf97;">
-                            <p><span class="code">ЧЕК №${order.code}</span> <span style="color:#6fcf97;">✅ Завершён</span></p>
-                            <p><span>Игрок:</span> ${order.nick} | <span>Сумма:</span> ${order.total} VC</p>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('archive-list').innerHTML = archiveHtml;
-        }
-
-        // ============================================================
-        // ========== ДЕЙСТВИЯ АДМИНА ==========
-        // ============================================================
-        window.confirmOrder = function(code) {
-            updateOrder(code, { confirmed: true });
-            renderAdmin();
-        };
-
-        window.cancelOrder = async function(code) {
-            const ordersData = await getOrders();
-            const order = ordersData[code];
-            if (order && !order.confirmed) {
-                const balance = await db.ref('balances/' + order.nick).once('value');
-                const current = balance.val() || 0;
-                await setBalance(order.nick, current + order.total);
-                await updateOrder(code, { confirmed: true });
-                renderAdmin();
-            }
-        };
-
-        document.getElementById('give-btn').addEventListener('click', async () => {
-            const nick = document.getElementById('give-nick').value.trim();
-            const amount = parseInt(document.getElementById('give-amount').value.trim());
-            const msg = document.getElementById('give-msg');
-            if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
-            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
-            const balance = await db.ref('balances/' + nick).once('value');
+    window.cancelOrder = async function(code) {
+        const ordersData = await getOrders();
+        const order = ordersData[code];
+        if (order && !order.confirmed) {
+            const balance = await db.ref('balances/' + order.nick).once('value');
             const current = balance.val() || 0;
-            await setBalance(nick, current + amount);
-            msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
-            msg.style.color = '#b79aff';
-            document.getElementById('give-nick').value = '';
-            document.getElementById('give-amount').value = '';
+            await setBalance(order.nick, current + order.total);
+            await updateOrder(code, { confirmed: true });
             renderAdmin();
-        });
+        }
+    };
 
-        // ============================================================
-        // ========== МОДАЛЬНОЕ ОКНО ==========
-        // ============================================================
-        const modal = document.getElementById('admin-modal');
-        const openBtn = document.getElementById('open-admin-btn');
-        const closeBtn = document.getElementById('close-admin-modal');
+    document.getElementById('give-btn').addEventListener('click', async () => {
+        const nick = document.getElementById('give-nick').value.trim();
+        const amount = parseInt(document.getElementById('give-amount').value.trim());
+        const msg = document.getElementById('give-msg');
+        if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
+        if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
+        const balance = await db.ref('balances/' + nick).once('value');
+        const current = balance.val() || 0;
+        await setBalance(nick, current + amount);
+        msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
+        msg.style.color = '#b79aff';
+        document.getElementById('give-nick').value = '';
+        document.getElementById('give-amount').value = '';
+        renderAdmin();
+    });
 
-        openBtn.addEventListener('click', () => {
-            modal.classList.add('active');
-            if (isAdmin) renderAdmin();
-        });
+    // ============================================================
+    // ========== МОДАЛЬНОЕ ОКНО ==========
+    // ============================================================
+    const modal = document.getElementById('admin-modal');
+    document.getElementById('open-admin-btn').addEventListener('click', () => {
+        modal.classList.add('active');
+        if (isAdmin) renderAdmin();
+    });
+    document.getElementById('close-admin-modal').addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
+    // ============================================================
+    // ========== ВХОД / ВЫХОД ==========
+    // ============================================================
+    document.getElementById('admin-login-btn').addEventListener('click', () => {
+        const pass = document.getElementById('admin-password').value.trim();
+        const msg = document.getElementById('login-msg');
+        if (pass === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('admin-login-section').classList.add('hidden');
+            document.getElementById('admin-content').classList.remove('hidden');
+            renderAdmin();
+        } else {
+            msg.textContent = '❌ Неверный пароль!';
+            msg.style.color = '#ff6b6b';
+        }
+    });
 
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.classList.remove('active');
-        });
+    document.getElementById('admin-logout-btn').addEventListener('click', () => {
+        isAdmin = false;
+        document.getElementById('admin-login-section').classList.remove('hidden');
+        document.getElementById('admin-content').classList.add('hidden');
+        document.getElementById('admin-password').value = '';
+        document.getElementById('login-msg').textContent = '';
+        modal.classList.remove('active');
+    });
 
-        // ============================================================
-        // ========== ВХОД / ВЫХОД ==========
-        // ============================================================
-        document.getElementById('admin-login-btn').addEventListener('click', () => {
-            const pass = document.getElementById('admin-password').value.trim();
-            const msg = document.getElementById('login-msg');
-            if (pass === ADMIN_PASSWORD) {
-                isAdmin = true;
-                document.getElementById('admin-login-section').classList.add('hidden');
-                document.getElementById('admin-content').classList.remove('hidden');
-                renderAdmin();
-            } else {
-                msg.textContent = '❌ Неверный пароль!';
-                msg.style.color = '#ff6b6b';
-            }
-        });
+    // ============================================================
+    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    // ============================================================
+    renderCatalog();
+    renderCart();
 
-        document.getElementById('admin-logout-btn').addEventListener('click', () => {
-            isAdmin = false;
-            document.getElementById('admin-login-section').classList.remove('hidden');
-            document.getElementById('admin-content').classList.add('hidden');
-            document.getElementById('admin-password').value = '';
-            document.getElementById('login-msg').textContent = '';
-            modal.classList.remove('active');
-        });
+    // Автообновление админки
+    db.ref('balances').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
+    db.ref('orders').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
+    db.ref('passwords').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
+</script>
 
-        // ============================================================
-        // ========== СЛУШАТЕЛИ ОБНОВЛЕНИЙ ==========
-        // ============================================================
-        db.ref('balances').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
-        db.ref('orders').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
-        db.ref('passwords').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
-    </script>
 </body>
 </html>
