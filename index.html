@@ -466,6 +466,16 @@
                 <div id="archive-list"></div>
             </div>
 
+            <!-- Смена пароля админа -->
+            <div class="admin-box">
+                <h3>🔑 Сменить пароль админа</h3>
+                <div class="flex-row">
+                    <input type="password" id="new-admin-password" placeholder="Новый пароль админа">
+                    <button class="btn-confirm" id="change-admin-password-btn">Сменить</button>
+                </div>
+                <div id="change-admin-msg" class="msg"></div>
+            </div>
+
             <button class="btn-danger" id="admin-logout-btn" style="margin-top:15px;">Выйти из админки</button>
         </div>
     </div>
@@ -490,9 +500,9 @@
     // ============================================================
     // ========== ДАННЫЕ ==========
     // ============================================================
-    const ADMIN_PASSWORD = 'void2026';
+    const ADMIN_PASSWORD_PATH = 'admin/password';
     let isAdmin = false;
-    let currentUser = null; // { nick, password }
+    let currentUser = null;
 
     // Каталог товаров
     const products = [
@@ -576,8 +586,6 @@
         const password = document.getElementById('register-password').value.trim();
         const password2 = document.getElementById('register-password2').value.trim();
         const msg = document.getElementById('register-account-msg');
-
-        console.log(`Длина пароля: ${password.length}, символы: "${password}"`);
 
         if (!nick || !password || !password2) {
             msg.textContent = '❌ Заполните все поля';
@@ -738,6 +746,69 @@
     function setBalance(nick, amount) { return db.ref('balances/' + nick).set(amount); }
     function updateOrder(code, data) { return db.ref('orders/' + code).update(data); }
 
+    // ============================================================
+    // ========== ПРОВЕРКА ПАРОЛЯ АДМИНА ==========
+    // ============================================================
+    async function checkAdminPassword(inputPassword) {
+        const snap = await db.ref(ADMIN_PASSWORD_PATH).once('value');
+        let storedPassword = snap.val();
+        if (!storedPassword) {
+            // Если пароль ещё не установлен — устанавливаем по умолчанию
+            await db.ref(ADMIN_PASSWORD_PATH).set('void2026');
+            storedPassword = 'void2026';
+        }
+        return inputPassword === storedPassword;
+    }
+
+    // ============================================================
+    // ========== ВХОД АДМИНА ==========
+    // ============================================================
+    document.getElementById('admin-login-btn').addEventListener('click', async () => {
+        const pass = document.getElementById('admin-password').value.trim();
+        const msg = document.getElementById('login-msg');
+        if (!pass) {
+            msg.textContent = '❌ Введите пароль';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        const isValid = await checkAdminPassword(pass);
+        if (isValid) {
+            isAdmin = true;
+            document.getElementById('admin-login-section').classList.add('hidden');
+            document.getElementById('admin-content').classList.remove('hidden');
+            renderAdmin();
+            msg.textContent = '';
+        } else {
+            msg.textContent = '❌ Неверный пароль!';
+            msg.style.color = '#ff6b6b';
+        }
+    });
+
+    // ============================================================
+    // ========== СМЕНА ПАРОЛЯ АДМИНА ==========
+    // ============================================================
+    document.getElementById('change-admin-password-btn').addEventListener('click', async () => {
+        const newPass = document.getElementById('new-admin-password').value.trim();
+        const msg = document.getElementById('change-admin-msg');
+        if (!newPass) {
+            msg.textContent = '❌ Введите новый пароль';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        if (newPass.length < 4) {
+            msg.textContent = '❌ Пароль должен быть не менее 4 символов';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        await db.ref(ADMIN_PASSWORD_PATH).set(newPass);
+        msg.textContent = '✅ Пароль администратора изменён!';
+        msg.style.color = '#6fcf97';
+        document.getElementById('new-admin-password').value = '';
+    });
+
+    // ============================================================
+    // ========== ОТОБРАЖЕНИЕ ДАННЫХ АДМИНА ==========
+    // ============================================================
     async function renderAdmin() {
         if (!isAdmin) return;
         const balances = await getBalances();
@@ -820,22 +891,8 @@
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
     // ============================================================
-    // ========== ВХОД / ВЫХОД АДМИНА ==========
+    // ========== ВЫХОД АДМИНА ==========
     // ============================================================
-    document.getElementById('admin-login-btn').addEventListener('click', () => {
-        const pass = document.getElementById('admin-password').value.trim();
-        const msg = document.getElementById('login-msg');
-        if (pass === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.getElementById('admin-login-section').classList.add('hidden');
-            document.getElementById('admin-content').classList.remove('hidden');
-            renderAdmin();
-        } else {
-            msg.textContent = '❌ Неверный пароль!';
-            msg.style.color = '#ff6b6b';
-        }
-    });
-
     document.getElementById('admin-logout-btn').addEventListener('click', () => {
         isAdmin = false;
         document.getElementById('admin-login-section').classList.remove('hidden');
