@@ -92,19 +92,6 @@
         .btn-danger:hover {
             background: #6a3a5a;
         }
-        .btn-secondary {
-            background: #1a1230;
-            color: #d9d0f0;
-            border: 1px solid #3b2b5a;
-            border-radius: 40px;
-            padding: 10px 25px;
-            cursor: pointer;
-            transition: 0.25s;
-        }
-        .btn-secondary:hover {
-            background: #2a1a4a;
-            border-color: #7a4cff;
-        }
 
         /* ===== КАТАЛОГ ===== */
         .catalog-grid {
@@ -320,30 +307,6 @@
             max-width: 400px;
             margin: 0 auto;
         }
-        .text-center {
-            text-align: center;
-        }
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .tab-btn {
-            background: #1a1230;
-            border: 1px solid #3b2b5a;
-            border-radius: 40px;
-            padding: 8px 20px;
-            color: #d9d0f0;
-            cursor: pointer;
-            transition: 0.25s;
-        }
-        .tab-btn.active {
-            background: #3a2a5a;
-            border-color: #9b7bff;
-        }
-        .tab-btn:hover {
-            background: #2a1a4a;
-        }
         @media (max-width: 600px) {
             .flex-row {
                 flex-direction: column;
@@ -374,32 +337,15 @@
     <section class="account-box" id="account-section">
         <h2>👤 Аккаунт</h2>
         <div id="account-display">
-            <p style="color:#7a6a9a;">Вы не авторизованы. Войдите или зарегистрируйтесь.</p>
+            <p style="color:#7a6a9a;">Вы не авторизованы. Войдите в аккаунт.</p>
         </div>
-        <div id="account-forms">
-            <div class="tab-buttons">
-                <button class="tab-btn active" id="login-tab-btn">Вход</button>
-                <button class="tab-btn" id="register-tab-btn">Регистрация</button>
+        <div id="login-form">
+            <div class="flex-row">
+                <input type="text" id="login-nick" placeholder="Ник">
+                <input type="password" id="login-password" placeholder="Пароль">
+                <button class="btn-confirm" id="login-btn">Войти</button>
             </div>
-            <!-- Вход -->
-            <div id="login-form">
-                <div class="flex-row">
-                    <input type="text" id="login-nick" placeholder="Ник">
-                    <input type="password" id="login-password" placeholder="Пароль">
-                    <button class="btn-confirm" id="login-btn">Войти</button>
-                </div>
-                <div id="login-account-msg" class="msg"></div>
-            </div>
-            <!-- Регистрация -->
-            <div id="register-form" class="hidden">
-                <div class="flex-row">
-                    <input type="text" id="register-nick" placeholder="Новый ник">
-                    <input type="password" id="register-password" placeholder="Пароль">
-                    <input type="password" id="register-password2" placeholder="Повторите пароль">
-                    <button class="btn-confirm" id="register-btn">Зарегистрироваться</button>
-                </div>
-                <div id="register-account-msg" class="msg"></div>
-            </div>
+            <div id="login-account-msg" class="msg"></div>
         </div>
         <button class="btn-danger hidden" id="logout-btn" style="margin-top:10px;">Выйти</button>
     </section>
@@ -519,16 +465,6 @@
     // ============================================================
     // ========== АККАУНТ ==========
     // ============================================================
-    async function registerUser(nick, password) {
-        const passwordSnap = await db.ref('passwords/' + nick).once('value');
-        if (passwordSnap.exists()) {
-            return { success: false, msg: 'Игрок с таким ником уже существует' };
-        }
-        await db.ref('passwords/' + nick).set(password);
-        await db.ref('balances/' + nick).set(0);
-        return { success: true, msg: 'Аккаунт создан!' };
-    }
-
     async function loginUser(nick, password) {
         const passwordSnap = await db.ref('passwords/' + nick).once('value');
         if (!passwordSnap.exists()) {
@@ -542,21 +478,21 @@
 
     function updateAccountUI() {
         const display = document.getElementById('account-display');
-        const forms = document.getElementById('account-forms');
+        const form = document.getElementById('login-form');
         const logoutBtn = document.getElementById('logout-btn');
         if (currentUser) {
             display.innerHTML = `<div class="account-info">✅ Вошли как <strong>${currentUser.nick}</strong></div>`;
-            forms.classList.add('hidden');
+            form.classList.add('hidden');
             logoutBtn.classList.remove('hidden');
         } else {
-            display.innerHTML = `<p style="color:#7a6a9a;">Вы не авторизованы. Войдите или зарегистрируйтесь.</p>`;
-            forms.classList.remove('hidden');
+            display.innerHTML = `<p style="color:#7a6a9a;">Вы не авторизованы. Войдите в аккаунт.</p>`;
+            form.classList.remove('hidden');
             logoutBtn.classList.add('hidden');
         }
     }
 
     // ============================================================
-    // ========== ВХОД / РЕГИСТРАЦИЯ ==========
+    // ========== ВХОД ==========
     // ============================================================
     document.getElementById('login-btn').addEventListener('click', async () => {
         const nick = document.getElementById('login-nick').value.trim();
@@ -581,61 +517,10 @@
         }
     });
 
-    document.getElementById('register-btn').addEventListener('click', async () => {
-        const nick = document.getElementById('register-nick').value.trim();
-        const password = document.getElementById('register-password').value.trim();
-        const password2 = document.getElementById('register-password2').value.trim();
-        const msg = document.getElementById('register-account-msg');
-
-        if (!nick || !password || !password2) {
-            msg.textContent = '❌ Заполните все поля';
-            msg.style.color = '#ff6b6b';
-            return;
-        }
-        if (password !== password2) {
-            msg.textContent = '❌ Пароли не совпадают';
-            msg.style.color = '#ff6b6b';
-            return;
-        }
-        if (password.length < 4) {
-            msg.textContent = `❌ Пароль должен быть не менее 4 символов. Сейчас введено ${password.length} символов.`;
-            msg.style.color = '#ff6b6b';
-            return;
-        }
-
-        const result = await registerUser(nick, password);
-        if (result.success) {
-            currentUser = { nick, password };
-            updateAccountUI();
-            document.getElementById('register-nick').value = '';
-            document.getElementById('register-password').value = '';
-            document.getElementById('register-password2').value = '';
-            msg.textContent = '✅ ' + result.msg + ' Вы автоматически вошли.';
-            msg.style.color = '#6fcf97';
-        } else {
-            msg.textContent = '❌ ' + result.msg;
-            msg.style.color = '#ff6b6b';
-        }
-    });
-
     document.getElementById('logout-btn').addEventListener('click', () => {
         currentUser = null;
         updateAccountUI();
         document.getElementById('cart-msg').textContent = '';
-    });
-
-    // Переключение табов
-    document.getElementById('login-tab-btn').addEventListener('click', () => {
-        document.getElementById('login-form').classList.remove('hidden');
-        document.getElementById('register-form').classList.add('hidden');
-        document.getElementById('login-tab-btn').classList.add('active');
-        document.getElementById('register-tab-btn').classList.remove('active');
-    });
-    document.getElementById('register-tab-btn').addEventListener('click', () => {
-        document.getElementById('login-form').classList.add('hidden');
-        document.getElementById('register-form').classList.remove('hidden');
-        document.getElementById('register-tab-btn').classList.add('active');
-        document.getElementById('login-tab-btn').classList.remove('active');
     });
 
     // ============================================================
@@ -753,7 +638,6 @@
         const snap = await db.ref(ADMIN_PASSWORD_PATH).once('value');
         let storedPassword = snap.val();
         if (!storedPassword) {
-            // Если пароль ещё не установлен — устанавливаем по умолчанию
             await db.ref(ADMIN_PASSWORD_PATH).set('void2026');
             storedPassword = 'void2026';
         }
