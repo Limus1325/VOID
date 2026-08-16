@@ -1,544 +1,502 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOID · Shop</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <!-- Firebase SDK -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>VOID – Магазин</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
-        /* ===== СТИЛИ (без изменений) ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             background: #0b081a;
             color: #d9d0f0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            padding: 30px 20px 60px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 30px 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .container { max-width: 1200px; width: 100%; }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
         .header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 20px;
             border-bottom: 1px solid #3b2b5a;
             padding-bottom: 20px;
             margin-bottom: 30px;
             flex-wrap: wrap;
+            gap: 15px;
         }
-        .logo-svg { width: 70px; height: 70px; flex-shrink: 0; }
-        .logo-svg svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 15px #7a4cff66); }
         .header h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
             background: linear-gradient(135deg, #b79aff, #7a4cff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
         }
-        .header .currency {
-            margin-left: auto;
-            background: #241d3a;
-            padding: 8px 20px;
+        .btn-admin {
+            background: #2a1a3a;
+            color: #d9d0f0;
+            border: 1px solid #5a4a7a;
             border-radius: 40px;
-            border: 1px solid #5b3f8a;
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #c6b5ff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .header .currency .balance-box {
-            background: #0f0c1e;
-            padding: 4px 12px;
-            border-radius: 30px;
-            border: 1px solid #5b3f8a;
-            font-size: 1rem;
-            color: #e5daff;
-        }
-        .header .session-info {
-            font-size: 0.85rem;
-            color: #7a6a9a;
-            background: #130f21;
-            padding: 6px 16px;
-            border-radius: 40px;
-            border: 1px solid #32284a;
-        }
-        .header .session-info span { color: #b79aff; font-weight: 600; }
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 24px;
-            margin: 30px 0 50px;
-        }
-        .service-card {
-            background: #18122b;
-            border: 1px solid #32284a;
-            border-radius: 20px;
-            padding: 22px 18px 20px;
-            transition: 0.25s ease;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-        }
-        .service-card:hover {
-            border-color: #9b7bff;
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(100, 60, 255, 0.25);
-        }
-        .service-card h3 { font-size: 1.3rem; margin-bottom: 8px; color: #e5daff; }
-        .service-card p { color: #a99bc9; font-size: 0.95rem; line-height: 1.5; flex-grow: 1; margin-bottom: 16px; }
-        .service-card .price { font-weight: 700; font-size: 1.2rem; color: #b48aff; margin-bottom: 16px; display: block; }
-        .service-card button {
-            background: #6b47d9;
-            border: none;
-            border-radius: 40px;
-            padding: 12px 0;
-            font-weight: 600;
-            font-size: 1rem;
-            color: #fff;
+            padding: 10px 25px;
             cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-            letter-spacing: 0.5px;
+            transition: 0.25s;
+            font-size: 1rem;
         }
-        .service-card button:hover { background: #8b6aff; box-shadow: 0 0 20px #6b47d966; }
-        .cart-section, .check-section {
-            background: #130f21;
-            border-radius: 28px;
-            padding: 28px 30px;
-            border: 1px solid #32284a;
-            margin-top: 20px;
+        .btn-admin:hover {
+            background: #3a2a5a;
+            border-color: #9b7bff;
+            box-shadow: 0 0 20px #7a4cff44;
         }
-        .cart-section h2 { font-size: 1.8rem; margin-bottom: 16px; color: #d4c5ff; display: flex; align-items: center; gap: 12px; }
-        .cart-section ul { list-style: none; padding: 0; margin: 0 0 20px 0; }
-        .cart-section li { padding: 8px 0; border-bottom: 1px solid #26203b; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; }
-        .cart-item-info { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-        .cart-item-info .item-name { flex: 1; }
-        .cart-total { font-size: 1.4rem; font-weight: 700; color: #c2adff; margin: 10px 0 20px; }
-        .btn-buy, .btn-confirm, .btn-remove {
+        .btn-confirm {
             background: #a07cff;
             border: none;
             border-radius: 60px;
-            padding: 14px 40px;
+            padding: 10px 25px;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: #0b081a;
             cursor: pointer;
             transition: 0.25s;
             box-shadow: 0 0 20px #7a4cff55;
-            margin-right: 15px;
         }
-        .btn-buy:hover, .btn-confirm:hover { background: #bea5ff; box-shadow: 0 0 40px #7a4cffaa; transform: scale(1.02); }
-        .btn-remove {
+        .btn-confirm:hover {
+            background: #bea5ff;
+            box-shadow: 0 0 40px #7a4cffaa;
+            transform: scale(1.02);
+        }
+        .btn-danger {
             background: #4a2a4a;
             color: #d9d0f0;
-            padding: 4px 14px;
-            font-size: 0.85rem;
-            box-shadow: none;
-            margin-right: 0;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 25px;
+            cursor: pointer;
         }
-        .btn-remove:hover { background: #6a3a5a; }
-        .btn-danger { background: #4a2a4a; color: #d9d0f0; }
-        .btn-danger:hover { background: #6a3a5a; }
-        .empty-cart { color: #7a6a9a; font-style: italic; }
-        .check-block {
-            background: #18122b;
-            border-radius: 20px;
-            padding: 25px;
-            margin: 15px 0;
-            border: 1px solid #5b3f8a;
+        .btn-danger:hover {
+            background: #6a3a5a;
+        }
+        .admin-box {
+            background: #130f21;
+            border-radius: 28px;
+            padding: 25px 30px;
+            border: 1px solid #32284a;
+            margin-top: 20px;
+        }
+        .admin-box h2 {
+            color: #d4c5ff;
+            margin-bottom: 15px;
+        }
+        .flex-row {
             display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
         }
-        .check-block .qr { width: 150px; height: 150px; background: white; padding: 10px; border-radius: 16px; }
-        .check-block .qr canvas { width: 100% !important; height: 100% !important; }
-        .check-block .info { flex: 1; }
-        .check-block .info p { margin: 8px 0; color: #c6b5ff; }
-        .check-block .info span { color: #e5daff; font-weight: 600; }
-        .check-block .info .code { font-size: 1.8rem; font-weight: 700; color: #b79aff; letter-spacing: 2px; }
-        .flex-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .hidden { display: none; }
-        .nick-input, .password-input {
+        input, select {
             background: #0b081a;
             border: 1px solid #3b2b5a;
             color: #d9d0f0;
-            padding: 12px 20px;
+            padding: 10px 18px;
             border-radius: 40px;
             font-size: 1rem;
             outline: none;
+            flex: 1;
+            min-width: 150px;
         }
-        .nick-input { width: 200px; }
-        .password-input { width: 160px; }
-        .nick-input:focus, .password-input:focus { border-color: #9b7bff; }
+        input:focus, select:focus {
+            border-color: #9b7bff;
+        }
+        .order-card {
+            background: #18122b;
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin: 12px 0;
+            border-left: 4px solid #9b7bff;
+        }
+        .order-card p {
+            margin: 5px 0;
+            color: #c6b5ff;
+        }
+        .order-card span {
+            color: #e5daff;
+            font-weight: 600;
+        }
+        .order-card .code {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #b79aff;
+            letter-spacing: 2px;
+        }
+        .order-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0;
+        }
+        .order-card ul li {
+            padding: 4px 0;
+            border-bottom: 1px solid #26203b;
+            display: flex;
+            justify-content: space-between;
+        }
+        .order-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .order-actions button {
+            padding: 8px 20px;
+            font-size: 0.9rem;
+        }
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #26203b;
+        }
+        .msg {
+            color: #7a6a9a;
+            margin-top: 8px;
+        }
+
+        /* ===== МОДАЛЬНОЕ ОКНО ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #130f21;
+            border-radius: 32px;
+            border: 1px solid #3b2b5a;
+            max-width: 700px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 0 60px #7a4cff33;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            color: #7a6a9a;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .modal-close:hover {
+            color: #d9d0f0;
+        }
+        .modal h2 {
+            color: #d4c5ff;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .login-box {
+            max-width: 400px;
+            margin: 0 auto;
+        }
         @media (max-width: 600px) {
-            .header { flex-direction: column; align-items: flex-start; }
-            .header .currency { margin-left: 0; }
-            .services-grid { grid-template-columns: 1fr; }
-            .flex-row { flex-direction: column; align-items: stretch; }
-            .nick-input, .password-input { width: 100%; }
-            .check-block { flex-direction: column; align-items: center; text-align: center; }
+            .flex-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
+    <div class="container">
+        <header class="header">
+            <h1>🔮 VOID – Магазин</h1>
+            <button class="btn-admin" id="open-admin-btn">⚙️ Админ</button>
+        </header>
 
-    <!-- ===== ШАПКА ===== -->
-    <header class="header">
-        <div class="logo-svg">
-            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polyline points="-10.0,-6.51 -7.27,-3.57 -4.54,-0.64 -1.81,2.3 0.02,4.67" stroke="#9b7bff" stroke-width="1.2" fill="none"/>
-                <polyline points="-10.0,-6.51 -6.0,-6.51 -2.0,-6.51 2.0,-6.51 6.0,-6.51 9.99,-6.51" stroke="#9b7bff" stroke-width="1.2" fill="none"/>
-                <polyline points="-5.04,-4.53 -4.84,-0.54 -4.74,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <polyline points="-5.04,-4.53 -1.04,-4.53 2.96,-4.53 4.76,-4.53" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <polyline points="-4.74,-0.24 -0.74,-0.24 3.26,-0.24 4.76,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <polyline points="-4.74,-0.24 -1.73,-2.88 1.28,-5.52 1.34,-5.55" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <polyline points="0.02,4.67 2.85,1.86 4.76,-0.24" stroke="#7a4cff" stroke-width="1.2" fill="none"/>
-                <polyline points="0.02,4.67 2.75,1.75 5.48,-1.17 8.21,-4.09 9.99,-6.51" stroke="#7a4cff" stroke-width="1.2" stroke-dasharray="2 2" fill="none"/>
-                <polyline points="1.34,-5.55 4.36,-2.91 4.76,-2.44" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <polyline points="4.76,-4.53 4.76,-0.54 4.76,-0.24" stroke="#b79aff" stroke-width="1.2" fill="none"/>
-                <circle cx="0.02" cy="4.67" r="0.4" fill="#9b7bff" opacity="0.8"/>
-                <circle cx="-10.0" cy="-6.51" r="0.4" fill="#7a4cff" opacity="0.6"/>
-                <circle cx="9.99" cy="-6.51" r="0.4" fill="#7a4cff" opacity="0.6"/>
-            </svg>
+        <!-- ОСНОВНОЙ КОНТЕНТ ДЛЯ ИГРОКОВ (можно заполнить позже) -->
+        <div class="admin-box" style="border-left: 4px solid #7a4cff;">
+            <h2>Добро пожаловать в VOID</h2>
+            <p style="color:#7a6a9a;">Здесь будет основной интерфейс магазина для игроков.</p>
         </div>
-        <h1>VOID · RichClan</h1>
-        <span class="currency">
-            💎 VC
-            <span class="balance-box" id="header-balance">0</span>
-        </span>
-        <span class="session-info">👤 <span id="session-nick">Не выбран</span></span>
-    </header>
+    </div>
 
-    <!-- ===== УСЛУГИ ===== -->
-    <div id="services-list" class="services-grid"></div>
+    <!-- ===== МОДАЛЬНОЕ ОКНО АДМИН-ПАНЕЛИ ===== -->
+    <div class="modal-overlay" id="admin-modal">
+        <div class="modal">
+            <button class="modal-close" id="close-admin-modal">&times;</button>
+            <h2>🔐 Админ-панель VOID</h2>
 
-    <!-- ===== КОРЗИНА ===== -->
-    <section class="cart-section">
-        <h2>🛒 Корзина</h2>
-        <div class="flex-row" style="margin-bottom: 20px;">
-            <input type="text" id="player-nick" class="nick-input" placeholder="Ваш игровой ник" required>
-            <input type="password" id="player-password" class="password-input" placeholder="Пароль от ника" required>
-            <button class="btn-confirm" id="check-balance-btn" style="padding:10px 25px; font-size:1rem; margin-right:0;">Войти</button>
-            <button class="btn-danger" id="reset-session-btn" style="padding:10px 25px; font-size:1rem; display:none;">Сменить ник</button>
-        </div>
-        <ul id="cart-items"><li class="empty-cart">Пока пусто</li></ul>
-        <div class="cart-total">Итого: <span id="total-price">0</span> VC</div>
-        <button class="btn-buy" id="buy-btn">Оформить заказ</button>
-    </section>
-
-    <!-- ===== ЧЕК ===== -->
-    <section class="check-section hidden" id="check-section">
-        <h2>🧾 Ваш чек</h2>
-        <div id="check-content"></div>
-    </section>
-
-</div>
-
-<script>
-    // ============================================================
-    // ========== КОНФИГ FIREBASE (ВСТАВЬТЕ СВОЙ) ==========
-    // ============================================================
-    const firebaseConfig = {
-        apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
-        authDomain: "void-e6363.firebaseapp.com",
-        databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
-        projectId: "void-e6363",
-        storageBucket: "void-e6363.firebasestorage.app",
-        messagingSenderId: "123260153615",
-        appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // ============================================================
-    // ========== ДАННЫЕ ==========
-    // ============================================================
-    let cart = [];
-    let servicesData = [];
-    let currentOrder = null;
-    let sessionNick = '';
-    let sessionPassword = '';
-
-    // ============================================================
-    // ========== СЛУШАТЕЛИ БАЛАНСА (ОБНОВЛЕНИЕ В РЕАЛЬНОМ ВРЕМЕНИ) ==========
-    // ============================================================
-    function listenBalance(nick) {
-        if (!nick) return;
-        const balanceRef = db.ref('balances/' + nick);
-        balanceRef.on('value', (snapshot) => {
-            const val = snapshot.val() || 0;
-            document.getElementById('header-balance').textContent = val;
-        });
-    }
-
-    // ============================================================
-    // ========== ФУНКЦИИ РАБОТЫ С БАЗОЙ ==========
-    // ============================================================
-    function getBalance(nick) {
-        // читаем один раз (для проверки при заказе)
-        return db.ref('balances/' + nick).once('value').then(snap => snap.val() || 0);
-    }
-
-    function setBalance(nick, amount) {
-        return db.ref('balances/' + nick).set(amount);
-    }
-
-    function getPassword(nick) {
-        return db.ref('passwords/' + nick).once('value').then(snap => snap.val() || null);
-    }
-
-    function setPassword(nick, pass) {
-        return db.ref('passwords/' + nick).set(pass);
-    }
-
-    function saveOrder(order) {
-        return db.ref('orders/' + order.code).set(order);
-    }
-
-    // ============================================================
-    // ========== ЗАГРУЗКА УСЛУГ ==========
-    // ============================================================
-    fetch('services.json')
-        .then(res => {
-            if (!res.ok) throw new Error('Не удалось загрузить услуги');
-            return res.json();
-        })
-        .then(data => {
-            servicesData = data;
-            renderServices(data);
-        })
-        .catch(err => {
-            document.getElementById('services-list').innerHTML =
-                `<p style="color:#a99bc9; grid-column:1/-1; text-align:center;">⚠️ Не удалось загрузить услуги.</p>`;
-            console.error(err);
-        });
-
-    function renderServices(services) {
-        const container = document.getElementById('services-list');
-        container.innerHTML = '';
-        services.forEach(service => {
-            const card = document.createElement('div');
-            card.className = 'service-card';
-            card.innerHTML = `
-                <h3>${service.name}</h3>
-                <p>${service.description}</p>
-                <span class="price">${service.price} VC</span>
-                <button onclick="addToCart(${service.id})">В корзину</button>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    // ============================================================
-    // ========== КОРЗИНА ==========
-    // ============================================================
-    function addToCart(id) {
-        if (!sessionNick) {
-            alert('Сначала войдите как игрок (введите ник и пароль)');
-            return;
-        }
-        const service = servicesData.find(s => s.id === id);
-        if (!service) return;
-        cart.push(service);
-        updateCart();
-    }
-
-    function removeFromCart(index) {
-        cart.splice(index, 1);
-        updateCart();
-    }
-
-    function updateCart() {
-        const list = document.getElementById('cart-items');
-        const totalSpan = document.getElementById('total-price');
-        list.innerHTML = '';
-        if (cart.length === 0) {
-            list.innerHTML = '<li class="empty-cart">Пока пусто</li>';
-            totalSpan.textContent = '0';
-            return;
-        }
-        let sum = 0;
-        cart.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div class="cart-item-info">
-                    <span class="item-name">${item.name}</span>
-                    <span>${item.price} VC</span>
-                    <button class="btn-remove" onclick="removeFromCart(${index})">✕</button>
+            <!-- ВХОД -->
+            <div id="admin-login-section" class="login-box">
+                <div class="flex-row">
+                    <input type="password" id="admin-password" placeholder="Пароль админа">
+                    <button class="btn-confirm" id="admin-login-btn">Войти</button>
                 </div>
-            `;
-            list.appendChild(li);
-            sum += item.price;
-        });
-        totalSpan.textContent = sum;
-    }
+                <div id="login-msg" class="msg"></div>
+            </div>
 
-    // ============================================================
-    // ========== ВХОД ИГРОКА ==========
-    // ============================================================
-    document.getElementById('check-balance-btn').addEventListener('click', async () => {
-        const nick = document.getElementById('player-nick').value.trim();
-        const password = document.getElementById('player-password').value.trim();
+            <!-- АДМИН-КОНТЕНТ (скрыт до входа) -->
+            <div id="admin-content" class="hidden">
+                <!-- Выдача VC -->
+                <div class="admin-box">
+                    <h2>💎 Выдать VC</h2>
+                    <div class="flex-row">
+                        <input type="text" id="give-nick" placeholder="Ник игрока">
+                        <input type="number" id="give-amount" placeholder="Сумма" min="1">
+                        <button class="btn-confirm" id="give-btn">Выдать</button>
+                    </div>
+                    <div id="give-msg" class="msg"></div>
+                </div>
 
-        if (!nick || !password) {
-            alert('Введите ник и пароль!');
-            return;
-        }
+                <!-- Игроки -->
+                <div class="admin-box">
+                    <h2>👥 Игроки и балансы</h2>
+                    <div id="players-list"></div>
+                </div>
 
-        const storedPass = await getPassword(nick);
-        if (storedPass === null) {
-            // Первый вход — устанавливаем пароль
-            await setPassword(nick, password);
-            await setBalance(nick, 0);
-            alert(`✅ Пароль для ника ${nick} установлен!`);
-        } else if (storedPass !== password) {
-            alert('❌ Неверный пароль!');
-            return;
-        }
+                <!-- Активные заказы -->
+                <div class="admin-box">
+                    <h2>🧾 Активные заказы</h2>
+                    <div id="orders-list"></div>
+                </div>
 
-        sessionNick = nick;
-        sessionPassword = password;
-        document.getElementById('player-nick').value = '';
-        document.getElementById('player-password').value = '';
-        document.getElementById('player-nick').disabled = true;
-        document.getElementById('player-password').disabled = true;
-        document.getElementById('check-balance-btn').style.display = 'none';
-        document.getElementById('reset-session-btn').style.display = 'inline-block';
-        document.getElementById('session-nick').textContent = nick;
-        listenBalance(nick);
-        cart = [];
-        updateCart();
-        alert(`✅ Вы вошли как ${nick}.`);
-    });
+                <!-- Архив -->
+                <div class="admin-box">
+                    <h2>📦 Архив заказов</h2>
+                    <div id="archive-list"></div>
+                </div>
 
-    document.getElementById('reset-session-btn').addEventListener('click', () => {
-        sessionNick = '';
-        sessionPassword = '';
-        document.getElementById('player-nick').disabled = false;
-        document.getElementById('player-password').disabled = false;
-        document.getElementById('player-nick').value = '';
-        document.getElementById('player-password').value = '';
-        document.getElementById('check-balance-btn').style.display = 'inline-block';
-        document.getElementById('reset-session-btn').style.display = 'none';
-        document.getElementById('header-balance').textContent = '0';
-        document.getElementById('session-nick').textContent = 'Не выбран';
-        cart = [];
-        updateCart();
-        // отписываемся от баланса
-        db.ref('balances/' + sessionNick).off();
-        alert('🔄 Сессия сброшена.');
-    });
+                <button class="btn-danger" id="admin-logout-btn" style="margin-top:15px;">Выйти из админки</button>
+            </div>
+        </div>
+    </div>
 
-    // ============================================================
-    // ========== ГЕНЕРАЦИЯ ЧЕКА ==========
-    // ============================================================
-    function generateOrderCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 8; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-    }
-
-    function createCheck(nick, items, total, code) {
-        const timestamp = new Date().toLocaleString();
-        const orderData = {
-            code,
-            nick,
-            items,
-            total,
-            timestamp,
-            confirmed: false
+    <script>
+        // ============================================================
+        // ========== КОНФИГ FIREBASE (ВАШ) ==========
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2CA6zopiJpxSuWjSn0svdpVUV2gdJjAc",
+            authDomain: "void-e6363.firebaseapp.com",
+            databaseURL: "https://void-e6363-default-rtdb.firebaseio.com",
+            projectId: "void-e6363",
+            storageBucket: "void-e6363.firebasestorage.app",
+            messagingSenderId: "123260153615",
+            appId: "1:123260153615:web:83e7682dbfa72e6c6c987a"
         };
 
-        saveOrder(orderData);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        const qrText = `ЧЕК №${code}\nНик: ${nick}\nСумма: ${total} VC\nДата: ${timestamp}`;
-        const itemsHtml = items.map(item => `<li><span>${item.name}</span><span>${item.price} VC</span></li>`).join('');
+        // ============================================================
+        // ========== ДАННЫЕ ==========
+        // ============================================================
+        const ADMIN_PASSWORD = 'void2026';
+        let isAdmin = false;
 
-        document.getElementById('check-content').innerHTML = `
-            <div class="check-block">
-                <div class="qr" id="qr-container"></div>
-                <div class="info">
-                    <p><span class="code">ЧЕК №${code}</span></p>
-                    <p><span>Игрок:</span> ${nick}</p>
-                    <p><span>Сумма:</span> ${total} VC</p>
-                    <p><span>Дата:</span> ${timestamp}</p>
-                    <p><span>Услуги:</span></p>
-                    <ul>${itemsHtml}</ul>
-                    <p style="color:#7a6a9a; margin-top:10px;">⏳ Статус: <span style="color:#ffb347;">Ожидает подтверждения</span></p>
-                </div>
-            </div>
-        `;
+        // ============================================================
+        // ========== РАБОТА С БАЗОЙ ==========
+        // ============================================================
+        function getBalances() {
+            return db.ref('balances').once('value').then(snap => snap.val() || {});
+        }
 
-        const qrContainer = document.getElementById('qr-container');
-        new QRCode(qrContainer, {
-            text: qrText,
-            width: 150,
-            height: 150,
-            colorDark: '#0b081a',
-            colorLight: '#ffffff'
+        function getOrders() {
+            return db.ref('orders').once('value').then(snap => snap.val() || {});
+        }
+
+        function getPasswords() {
+            return db.ref('passwords').once('value').then(snap => snap.val() || {});
+        }
+
+        function setBalance(nick, amount) {
+            return db.ref('balances/' + nick).set(amount);
+        }
+
+        function updateOrder(code, data) {
+            return db.ref('orders/' + code).update(data);
+        }
+
+        // ============================================================
+        // ========== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
+        // ============================================================
+        async function renderAdmin() {
+            if (!isAdmin) return;
+
+            // ---- Игроки ----
+            const balances = await getBalances();
+            const passwords = await getPasswords();
+            let playersHtml = '';
+            const nicks = Object.keys(balances);
+            if (nicks.length === 0) {
+                playersHtml = '<p style="color:#7a6a9a;">Нет зарегистрированных игроков.</p>';
+            } else {
+                nicks.forEach(nick => {
+                    const hasPass = passwords[nick] ? '🔒' : '🔓';
+                    playersHtml += `<div class="player-item"><span>${hasPass} <span style="color:#b79aff;">${nick}</span></span><span>${balances[nick]} VC</span></div>`;
+                });
+            }
+            document.getElementById('players-list').innerHTML = playersHtml;
+
+            // ---- Заказы ----
+            const ordersData = await getOrders();
+            const orders = Object.values(ordersData);
+            const active = orders.filter(o => !o.confirmed);
+            let ordersHtml = '';
+            if (active.length === 0) {
+                ordersHtml = '<p style="color:#7a6a9a;">Нет активных заказов.</p>';
+            } else {
+                active.forEach(order => {
+                    const itemsHtml = order.items.map(item =>
+                        `<li><span>${item.name}</span><span>${item.price} VC</span></li>`
+                    ).join('');
+                    ordersHtml += `
+                        <div class="order-card">
+                            <p><span class="code">ЧЕК №${order.code}</span></p>
+                            <p><span>Игрок:</span> ${order.nick}</p>
+                            <p><span>Сумма:</span> ${order.total} VC</p>
+                            <p><span>Дата:</span> ${order.timestamp}</p>
+                            <ul>${itemsHtml}</ul>
+                            <div class="order-actions">
+                                <button class="btn-confirm" onclick="confirmOrder('${order.code}')">✅ Подтвердить</button>
+                                <button class="btn-confirm" style="background:#4a2a4a; color:#d9d0f0;" onclick="cancelOrder('${order.code}')">❌ Отменить</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('orders-list').innerHTML = ordersHtml;
+
+            // ---- Архив ----
+            const archived = orders.filter(o => o.confirmed);
+            let archiveHtml = '';
+            if (archived.length === 0) {
+                archiveHtml = '<p style="color:#7a6a9a;">Архив пуст.</p>';
+            } else {
+                archived.forEach(order => {
+                    archiveHtml += `
+                        <div class="order-card" style="border-left-color:#6fcf97;">
+                            <p><span class="code">ЧЕК №${order.code}</span> <span style="color:#6fcf97;">✅ Завершён</span></p>
+                            <p><span>Игрок:</span> ${order.nick} | <span>Сумма:</span> ${order.total} VC</p>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('archive-list').innerHTML = archiveHtml;
+        }
+
+        // ============================================================
+        // ========== ДЕЙСТВИЯ АДМИНА ==========
+        // ============================================================
+        window.confirmOrder = function(code) {
+            updateOrder(code, { confirmed: true });
+            renderAdmin();
+        };
+
+        window.cancelOrder = async function(code) {
+            const ordersData = await getOrders();
+            const order = ordersData[code];
+            if (order && !order.confirmed) {
+                const balance = await db.ref('balances/' + order.nick).once('value');
+                const current = balance.val() || 0;
+                await setBalance(order.nick, current + order.total);
+                await updateOrder(code, { confirmed: true });
+                renderAdmin();
+            }
+        };
+
+        document.getElementById('give-btn').addEventListener('click', async () => {
+            const nick = document.getElementById('give-nick').value.trim();
+            const amount = parseInt(document.getElementById('give-amount').value.trim());
+            const msg = document.getElementById('give-msg');
+            if (!nick) { msg.textContent = '❌ Введите ник'; msg.style.color = '#ff6b6b'; return; }
+            if (!amount || amount <= 0) { msg.textContent = '❌ Сумма > 0'; msg.style.color = '#ff6b6b'; return; }
+            const balance = await db.ref('balances/' + nick).once('value');
+            const current = balance.val() || 0;
+            await setBalance(nick, current + amount);
+            msg.textContent = `✅ Выдано ${amount} VC игроку ${nick}`;
+            msg.style.color = '#b79aff';
+            document.getElementById('give-nick').value = '';
+            document.getElementById('give-amount').value = '';
+            renderAdmin();
         });
 
-        document.getElementById('check-section').classList.remove('hidden');
-        currentOrder = orderData;
-    }
+        // ============================================================
+        // ========== МОДАЛЬНОЕ ОКНО ==========
+        // ============================================================
+        const modal = document.getElementById('admin-modal');
+        const openBtn = document.getElementById('open-admin-btn');
+        const closeBtn = document.getElementById('close-admin-modal');
 
-    // ============================================================
-    // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
-    // ============================================================
-    document.getElementById('buy-btn').addEventListener('click', async () => {
-        if (!sessionNick) {
-            alert('Сначала войдите как игрок (введите ник и пароль)');
-            return;
-        }
+        openBtn.addEventListener('click', () => {
+            modal.classList.add('active');
+            if (isAdmin) renderAdmin();
+        });
 
-        if (cart.length === 0) {
-            alert('Корзина пуста!');
-            return;
-        }
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
 
-        const checkPass = prompt('Введите пароль от вашего ника для подтверждения заказа:');
-        if (checkPass !== sessionPassword) {
-            alert('❌ Неверный пароль! Заказ отменён.');
-            return;
-        }
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
 
-        const total = cart.reduce((sum, item) => sum + item.price, 0);
-        const balance = await getBalance(sessionNick);
+        // ============================================================
+        // ========== ВХОД / ВЫХОД ==========
+        // ============================================================
+        document.getElementById('admin-login-btn').addEventListener('click', () => {
+            const pass = document.getElementById('admin-password').value.trim();
+            const msg = document.getElementById('login-msg');
+            if (pass === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('admin-login-section').classList.add('hidden');
+                document.getElementById('admin-content').classList.remove('hidden');
+                renderAdmin();
+            } else {
+                msg.textContent = '❌ Неверный пароль!';
+                msg.style.color = '#ff6b6b';
+            }
+        });
 
-        if (balance < total) {
-            alert(`❌ Недостаточно VC. Ваш баланс: ${balance} VC, а сумма заказа: ${total} VC.`);
-            return;
-        }
+        document.getElementById('admin-logout-btn').addEventListener('click', () => {
+            isAdmin = false;
+            document.getElementById('admin-login-section').classList.remove('hidden');
+            document.getElementById('admin-content').classList.add('hidden');
+            document.getElementById('admin-password').value = '';
+            document.getElementById('login-msg').textContent = '';
+            modal.classList.remove('active');
+        });
 
-        await setBalance(sessionNick, balance - total);
-
-        const code = generateOrderCode();
-        const items = cart.map(item => ({ name: item.name, price: item.price }));
-        createCheck(sessionNick, items, total, code);
-
-        cart = [];
-        updateCart();
-        alert(`✅ Заказ оформлен! Чек №${code} сгенерирован.`);
-    });
-
-    // ============================================================
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
-    // ============================================================
-    updateCart();
-</script>
+        // ============================================================
+        // ========== СЛУШАТЕЛИ ОБНОВЛЕНИЙ ==========
+        // ============================================================
+        db.ref('balances').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
+        db.ref('orders').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
+        db.ref('passwords').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
+    </script>
 </body>
 </html>
