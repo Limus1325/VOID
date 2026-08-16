@@ -47,6 +47,7 @@
             display: flex;
             gap: 12px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .btn-admin {
             background: #2a1a3a;
@@ -168,6 +169,24 @@
             text-align: right;
         }
 
+        /* ===== АККАУНТ ===== */
+        .account-box {
+            background: #130f21;
+            border-radius: 28px;
+            padding: 25px 30px;
+            border: 1px solid #32284a;
+            margin: 20px 0;
+        }
+        .account-box h2 {
+            color: #d4c5ff;
+            margin-bottom: 15px;
+        }
+        .account-info {
+            color: #b79aff;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
         /* ===== АДМИН-МОДАЛКА ===== */
         .modal-overlay {
             position: fixed;
@@ -232,7 +251,7 @@
             gap: 15px;
             margin-bottom: 15px;
         }
-        input, select {
+        input {
             background: #0b081a;
             border: 1px solid #3b2b5a;
             color: #d9d0f0;
@@ -243,7 +262,7 @@
             flex: 1;
             min-width: 150px;
         }
-        input:focus, select:focus {
+        input:focus {
             border-color: #9b7bff;
         }
         .order-card {
@@ -304,6 +323,27 @@
         .text-center {
             text-align: center;
         }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            background: #1a1230;
+            border: 1px solid #3b2b5a;
+            border-radius: 40px;
+            padding: 8px 20px;
+            color: #d9d0f0;
+            cursor: pointer;
+            transition: 0.25s;
+        }
+        .tab-btn.active {
+            background: #3a2a5a;
+            border-color: #9b7bff;
+        }
+        .tab-btn:hover {
+            background: #2a1a4a;
+        }
         @media (max-width: 600px) {
             .flex-row {
                 flex-direction: column;
@@ -311,6 +351,10 @@
             }
             .catalog-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
             }
         }
     </style>
@@ -326,6 +370,40 @@
         </div>
     </header>
 
+    <!-- ===== АККАУНТ ===== -->
+    <section class="account-box" id="account-section">
+        <h2>👤 Аккаунт</h2>
+        <div id="account-display">
+            <p style="color:#7a6a9a;">Вы не авторизованы. Войдите или зарегистрируйтесь.</p>
+        </div>
+        <div id="account-forms">
+            <div class="tab-buttons">
+                <button class="tab-btn active" id="login-tab-btn">Вход</button>
+                <button class="tab-btn" id="register-tab-btn">Регистрация</button>
+            </div>
+            <!-- Вход -->
+            <div id="login-form">
+                <div class="flex-row">
+                    <input type="text" id="login-nick" placeholder="Ник">
+                    <input type="password" id="login-password" placeholder="Пароль">
+                    <button class="btn-confirm" id="login-btn">Войти</button>
+                </div>
+                <div id="login-account-msg" class="msg"></div>
+            </div>
+            <!-- Регистрация -->
+            <div id="register-form" class="hidden">
+                <div class="flex-row">
+                    <input type="text" id="register-nick" placeholder="Новый ник">
+                    <input type="password" id="register-password" placeholder="Пароль">
+                    <input type="password" id="register-password2" placeholder="Повторите пароль">
+                    <button class="btn-confirm" id="register-btn">Зарегистрироваться</button>
+                </div>
+                <div id="register-account-msg" class="msg"></div>
+            </div>
+        </div>
+        <button class="btn-danger hidden" id="logout-btn" style="margin-top:10px;">Выйти</button>
+    </section>
+
     <!-- ===== КАТАЛОГ ===== -->
     <section>
         <h2 style="color:#d4c5ff; margin-bottom:15px;">🛒 Товары</h2>
@@ -337,10 +415,7 @@
         <h2>🛍️ Корзина</h2>
         <div id="cart-items"></div>
         <div class="cart-total" id="cart-total">Итого: 0 VC</div>
-        <div class="flex-row">
-            <input type="text" id="cart-nick" placeholder="Ваш ник" style="flex:2;">
-            <button class="btn-confirm" id="checkout-btn">💳 Оформить заказ</button>
-        </div>
+        <button class="btn-confirm" id="checkout-btn">💳 Оформить заказ</button>
         <div id="cart-msg" class="msg"></div>
     </section>
 </div>
@@ -417,6 +492,7 @@
     // ============================================================
     const ADMIN_PASSWORD = 'void2026';
     let isAdmin = false;
+    let currentUser = null; // { nick, password }
 
     // Каталог товаров
     const products = [
@@ -431,7 +507,127 @@
     let cart = [];
 
     // ============================================================
-    // ========== РЕНДЕР КАТАЛОГА ==========
+    // ========== АККАУНТ ==========
+    // ============================================================
+    async function registerUser(nick, password) {
+        const passwordSnap = await db.ref('passwords/' + nick).once('value');
+        if (passwordSnap.exists()) {
+            return { success: false, msg: 'Игрок с таким ником уже существует' };
+        }
+        await db.ref('passwords/' + nick).set(password);
+        await db.ref('balances/' + nick).set(0);
+        return { success: true, msg: 'Аккаунт создан!' };
+    }
+
+    async function loginUser(nick, password) {
+        const passwordSnap = await db.ref('passwords/' + nick).once('value');
+        if (!passwordSnap.exists()) {
+            return { success: false, msg: 'Игрок не найден' };
+        }
+        if (passwordSnap.val() !== password) {
+            return { success: false, msg: 'Неверный пароль' };
+        }
+        return { success: true, msg: 'Вход выполнен' };
+    }
+
+    function updateAccountUI() {
+        const display = document.getElementById('account-display');
+        const forms = document.getElementById('account-forms');
+        const logoutBtn = document.getElementById('logout-btn');
+        if (currentUser) {
+            display.innerHTML = `<div class="account-info">✅ Вошли как <strong>${currentUser.nick}</strong></div>`;
+            forms.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+        } else {
+            display.innerHTML = `<p style="color:#7a6a9a;">Вы не авторизованы. Войдите или зарегистрируйтесь.</p>`;
+            forms.classList.remove('hidden');
+            logoutBtn.classList.add('hidden');
+        }
+    }
+
+    // ============================================================
+    // ========== ВХОД / РЕГИСТРАЦИЯ ==========
+    // ============================================================
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        const nick = document.getElementById('login-nick').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+        const msg = document.getElementById('login-account-msg');
+        if (!nick || !password) {
+            msg.textContent = '❌ Заполните все поля';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        const result = await loginUser(nick, password);
+        if (result.success) {
+            currentUser = { nick, password };
+            updateAccountUI();
+            document.getElementById('login-nick').value = '';
+            document.getElementById('login-password').value = '';
+            msg.textContent = '✅ ' + result.msg;
+            msg.style.color = '#6fcf97';
+        } else {
+            msg.textContent = '❌ ' + result.msg;
+            msg.style.color = '#ff6b6b';
+        }
+    });
+
+    document.getElementById('register-btn').addEventListener('click', async () => {
+        const nick = document.getElementById('register-nick').value.trim();
+        const password = document.getElementById('register-password').value.trim();
+        const password2 = document.getElementById('register-password2').value.trim();
+        const msg = document.getElementById('register-account-msg');
+        if (!nick || !password || !password2) {
+            msg.textContent = '❌ Заполните все поля';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        if (password !== password2) {
+            msg.textContent = '❌ Пароли не совпадают';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        if (password.length < 4) {
+            msg.textContent = '❌ Пароль должен быть не менее 4 символов';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        const result = await registerUser(nick, password);
+        if (result.success) {
+            currentUser = { nick, password };
+            updateAccountUI();
+            document.getElementById('register-nick').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-password2').value = '';
+            msg.textContent = '✅ ' + result.msg + ' Вы автоматически вошли.';
+            msg.style.color = '#6fcf97';
+        } else {
+            msg.textContent = '❌ ' + result.msg;
+            msg.style.color = '#ff6b6b';
+        }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        currentUser = null;
+        updateAccountUI();
+        document.getElementById('cart-msg').textContent = '';
+    });
+
+    // Переключение табов
+    document.getElementById('login-tab-btn').addEventListener('click', () => {
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('login-tab-btn').classList.add('active');
+        document.getElementById('register-tab-btn').classList.remove('active');
+    });
+    document.getElementById('register-tab-btn').addEventListener('click', () => {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.remove('hidden');
+        document.getElementById('register-tab-btn').classList.add('active');
+        document.getElementById('login-tab-btn').classList.remove('active');
+    });
+
+    // ============================================================
+    // ========== КАТАЛОГ И КОРЗИНА ==========
     // ============================================================
     function renderCatalog() {
         const grid = document.getElementById('catalog-grid');
@@ -445,10 +641,12 @@
         `).join('');
     }
 
-    // ============================================================
-    // ========== КОРЗИНА ==========
-    // ============================================================
     function addToCart(id) {
+        if (!currentUser) {
+            document.getElementById('cart-msg').textContent = '❌ Сначала войдите в аккаунт!';
+            document.getElementById('cart-msg').style.color = '#ff6b6b';
+            return;
+        }
         const product = products.find(p => p.id === id);
         if (!product) return;
         const existing = cart.find(item => item.id === id);
@@ -486,15 +684,21 @@
     // ========== ОФОРМЛЕНИЕ ЗАКАЗА ==========
     // ============================================================
     document.getElementById('checkout-btn').addEventListener('click', async () => {
-        const nick = document.getElementById('cart-nick').value.trim();
         const msg = document.getElementById('cart-msg');
-        if (!nick) { msg.textContent = '❌ Введите ваш ник'; msg.style.color = '#ff6b6b'; return; }
-        if (cart.length === 0) { msg.textContent = '❌ Корзина пуста'; msg.style.color = '#ff6b6b'; return; }
+        if (!currentUser) {
+            msg.textContent = '❌ Сначала войдите в аккаунт!';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
+        if (cart.length === 0) {
+            msg.textContent = '❌ Корзина пуста';
+            msg.style.color = '#ff6b6b';
+            return;
+        }
 
         const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-        // Проверяем баланс
-        const balanceSnap = await db.ref('balances/' + nick).once('value');
+        const balanceSnap = await db.ref('balances/' + currentUser.nick).once('value');
         const balance = balanceSnap.val() || 0;
         if (balance < total) {
             msg.textContent = `❌ Недостаточно VC. У вас ${balance}, нужно ${total}`;
@@ -502,13 +706,11 @@
             return;
         }
 
-        // Списываем VC
-        await db.ref('balances/' + nick).set(balance - total);
+        await db.ref('balances/' + currentUser.nick).set(balance - total);
 
-        // Создаём заказ
         const code = Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
         const orderData = {
-            nick: nick,
+            nick: currentUser.nick,
             total: total,
             items: cart.map(item => ({ name: item.name, price: item.price, qty: item.qty })),
             timestamp: new Date().toLocaleString('ru-RU'),
@@ -517,10 +719,8 @@
         };
         await db.ref('orders/' + code).set(orderData);
 
-        // Очищаем корзину
         cart = [];
         renderCart();
-        document.getElementById('cart-nick').value = '';
         msg.textContent = `✅ Заказ оформлен! ЧЕК №${code} отправлен на подтверждение.`;
         msg.style.color = '#b79aff';
     });
@@ -616,7 +816,7 @@
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
     // ============================================================
-    // ========== ВХОД / ВЫХОД ==========
+    // ========== ВХОД / ВЫХОД АДМИНА ==========
     // ============================================================
     document.getElementById('admin-login-btn').addEventListener('click', () => {
         const pass = document.getElementById('admin-password').value.trim();
@@ -646,8 +846,8 @@
     // ============================================================
     renderCatalog();
     renderCart();
+    updateAccountUI();
 
-    // Автообновление админки
     db.ref('balances').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
     db.ref('orders').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
     db.ref('passwords').on('value', () => { if (isAdmin && modal.classList.contains('active')) renderAdmin(); });
